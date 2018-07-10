@@ -600,23 +600,35 @@ public class Triangle
             double a = sides.get( TriangleData.DataID.DATA_A );  
             double b = sides.get( TriangleData.DataID.DATA_B );  
             double c = sides.get( TriangleData.DataID.DATA_C );
+            
            
             double alpha = lawOfCosines( a, b, c );
             double beta  = lawOfCosines( b, c, a );
-           
-            double gamma = 180.0 - alpha - beta;
-           
-            angles.set( TriangleData.DataID.DATA_A, alpha );
-            angles.set( TriangleData.DataID.DATA_B, beta  );
-            angles.set( TriangleData.DataID.DATA_C, gamma );
+            
+            // If the sum of the two shortest sides is less than the longest
+            // side, there's no way to close the triangle.  This should check
+            // for that...
+            if (  !Double.isNaN( alpha )
+               && !Double.isNaN( beta  )
+                )
+            {
+                double gamma = 180.0 - alpha - beta;
 
-            successful = true;
+                angles.set( TriangleData.DataID.DATA_A, alpha );
+                angles.set( TriangleData.DataID.DATA_B, beta  );
+                angles.set( TriangleData.DataID.DATA_C, gamma );
+
+                successful = true;
+            } // if good results from lawOfCosines()
            
         } // if all sides known
         else
         {
-           // &&& Need to idenfify the missing sides
-              System.out.printf( "Error: Insufficient side data for SSS()\n" );
+            // &&& Test to see if the sum of the two shortest sides is less than 
+            // the longest side in order to produce a more useful/accurate error
+            // message.
+            // &&& Need to idenfify the missing sides, if that's the problem
+            System.out.printf( "Error: Insufficient side data for SSS()\n" );
         }
    
         return successful;

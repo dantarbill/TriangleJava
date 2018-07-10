@@ -476,6 +476,23 @@ public class TriangleGUI
         return buttonPanel;
         
     } // createButtonPanel()
+    
+    /*========================================================================*
+     roundDouble()
+     *========================================================================*/
+    private double roundDouble
+    ( double aDouble
+    )
+    {
+        final int    NUM_DECIMAL_PLACES = 4;
+        final double FACTOR             = Math.pow(10, NUM_DECIMAL_PLACES);
+        double    result                = aDouble;
+        
+        result = Math.round( result * FACTOR) / FACTOR;
+        
+        return result;
+        
+    } // roundDouble
   
     /*========================================================================*
      actionPerformed()
@@ -524,43 +541,53 @@ public class TriangleGUI
             {
                 mDataAngleA.setText
                     ( String.valueOf
-                          ( mTriangle.angles.get( TriangleData.DataID.DATA_A )
-                          )
+                        ( roundDouble
+                            ( mTriangle.angles.get( TriangleData.DataID.DATA_A )
+                            )
+                        )
                     );
                 mDataAngleB.setText
                     ( String.valueOf
-                          ( mTriangle.angles.get( TriangleData.DataID.DATA_B )
-                          )
+                        ( roundDouble
+                            ( mTriangle.angles.get( TriangleData.DataID.DATA_B )
+                            )
+                        )
                     );
                 mDataAngleC.setText
                     ( String.valueOf
-                          ( mTriangle.angles.get( TriangleData.DataID.DATA_C )
-                          )
+                        ( roundDouble
+                            ( mTriangle.angles.get( TriangleData.DataID.DATA_C )
+                            )
+                        )
                     );
                 mDataSideA.setText
                     ( String.valueOf
-                          ( mTriangle.sides.get( TriangleData.DataID.DATA_A )
-                          )
+                        ( roundDouble
+                            ( mTriangle.sides.get( TriangleData.DataID.DATA_A )
+                            )
+                        )
                     );
                 mDataSideB.setText
                     ( String.valueOf
-                          ( mTriangle.sides.get( TriangleData.DataID.DATA_B )
-                          )
+                        ( roundDouble
+                            ( mTriangle.sides.get( TriangleData.DataID.DATA_B )
+                            )
+                        )
                     );
                 mDataSideC.setText
                     ( String.valueOf
-                          ( mTriangle.sides.get( TriangleData.DataID.DATA_C )
-                          )
+                        ( roundDouble
+                            ( mTriangle.sides.get( TriangleData.DataID.DATA_C )
+                            )
+                        )
                     );
-
-                // &&& do I need to do something to make the field update visible?
                
             } // if solution succeeded
             else
             {
                 JOptionPane.showMessageDialog( null
                                              , "Failed to find a solution"
-                                             , "Error Dialog"
+                                             , "Error"
                                              , JOptionPane.PLAIN_MESSAGE
                                              );
                 setVisible(true);
@@ -580,30 +607,21 @@ public class TriangleGUI
             mDataAngleB.setValue( new Double( 0.0 ) );
             mDataAngleC.setValue( new Double( 0.0 ) );
             
-            mTriangle.angles.set( TriangleData.DataID.DATA_A 
-                                , 0.0
-                                );
-            mTriangle.angles.set( TriangleData.DataID.DATA_B 
-                                , 0.0
-                                );
-            mTriangle.angles.set( TriangleData.DataID.DATA_C 
-                                , 0.0
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_A 
-                                , 0.0
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_B 
-                                , 0.0
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_C 
-                                , 0.0
-                                );
+            mTriangle.setAll( 0.0
+                            , 0.0
+                            , 0.0
+                            , 0.0
+                            , 0.0
+                            , 0.0
+                            );
+            /*
             JOptionPane.showMessageDialog( null
                                          , "Reset all to zero"
-                                         , "Message Dialog"
+                                         , "Message"
                                          , JOptionPane.PLAIN_MESSAGE
                                          );
             setVisible(true);  // show something
+            */
         } // if mResetButton
     
     } // actionPerformed()
