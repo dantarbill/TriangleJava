@@ -10,10 +10,15 @@
  *============================================================================*/
 
 import java.lang.*;
-
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;  //notice javax
+import java.text.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.Graphics;
+import javax.swing.*;
+import javax.swing.text.*;
+
+
 
 /*========================================================================*
  TriangleGUI class
@@ -29,7 +34,17 @@ public class TriangleGUI
     protected final int GOK_PIXELS   = 7;
     protected final int TB_HEIGHT    = 30; // Top Bar Height
     
+    protected final int    NUM_DECIMAL_PLACES  = 4;
+    protected final int    NUM_ROUNDING_PLACES = 12;
+    protected final double ROUND_FACTOR        = Math.pow(10, NUM_ROUNDING_PLACES);
+    
     Triangle  mTriangle = null;
+    
+    /*========================================================================*
+     Formatter stuff...
+     *========================================================================*/
+    private NumberFormat valueDisplayFormat;
+    private NumberFormat valueEditFormat;
     
     /*========================================================================*
      Base Panel data...
@@ -103,13 +118,13 @@ public class TriangleGUI
     final int    INDX_ANG_A  = 0;
     final int    INDX_ANG_B  = 1;
     final int    INDX_ANG_C  = 2;
-
-
     
     /*========================================================================*
      Graphic Panel data...
      *========================================================================*/
     JPanel  mGraphicPanel = null; // holds triangle graphic
+    
+    graphPainter  mPainter = null;
     
     /*========================================================================*
      TriangleGUI() constructor
@@ -121,6 +136,8 @@ public class TriangleGUI
         super("Triangle Solutions GUI");
         
         mTriangle = aTriangle;
+        
+        setUpFormats();
         
         setBounds( frameX
                  , frameY
@@ -135,6 +152,9 @@ public class TriangleGUI
         con.add(mBasePanel); // add the base panel to frame
         
         mButtonPanel.requestFocus();
+        
+        mPainter.setVerticies( 0,0,0,0,0,0 );
+
         // buttonPanel.setVisible(true);
         setVisible(true); // display this frame
     } // TriangleGUI constructor
@@ -194,6 +214,19 @@ public class TriangleGUI
         final int midRgtX     = ( ( dataPanelWidth / 4 ) * 3 )
                               - ( fieldWidth     / 2 );
         final int rgtX        = ( dataPanelWidth - fieldWidth - sidePadding );
+        
+        // &&& Oops!  These values need to be accessible outside this function
+        final int grphWndwTopX = fieldWidth + sidePadding;
+        final int grphWndwTopY = topPadding + (2 * fieldHeight);
+        final int grphWndwBtmX = rgtX;
+        final int grphWndwBtmY = btmRowY;
+        
+        mPainter = new graphPainter();
+        
+        mPainter.mGrphWndwTopX = fieldWidth + sidePadding;
+        mPainter.mGrphWndwTopY = topPadding + (2 * fieldHeight);
+        mPainter.mGrphWndwBtmX = rgtX;
+        mPainter.mGrphWndwBtmY = btmRowY;
 
         JPanel dataPanel  = new JPanel();
         
@@ -207,6 +240,8 @@ public class TriangleGUI
         dataPanel.setSize( dataPanelWidth
                          , dataPanelHeight
                          );
+        
+        dataPanel.add( "Center", mPainter );
         
         ////////////////////////////////////////////////////////////////////////
         // Create data fields...
@@ -326,7 +361,7 @@ public class TriangleGUI
         return dataPanel;
         
     } // createDataPanel()
-  
+    
     /*========================================================================*
      createDataField()
     
@@ -346,8 +381,15 @@ public class TriangleGUI
     , int    height
     )
     {
-        JFormattedTextField field = new JFormattedTextField( new Double( 0.0 ) );
+        JFormattedTextField field = new JFormattedTextField
+            ( new DefaultFormatterFactory
+                ( new NumberFormatter(valueDisplayFormat)
+                , new NumberFormatter(valueDisplayFormat)
+                , new NumberFormatter(valueEditFormat)
+                )
+            );
         
+        field.setValue( new Double( 0.0 ) );
         field.setHorizontalAlignment(JTextField.TRAILING);
         field.setEditable(true);
 
@@ -478,19 +520,43 @@ public class TriangleGUI
     } // createButtonPanel()
     
     /*========================================================================*
+     setUpFormats()
+     *========================================================================*/
+    private void setUpFormats()
+    {
+        valueDisplayFormat = NumberFormat.getNumberInstance();
+        // this works to display two fractional digits even if they're zero
+        valueDisplayFormat.setMinimumFractionDigits(2);
+        // &&& So, why doesn't this work such that I don't have to use roundDouble()?
+        valueDisplayFormat.setMaximumFractionDigits(NUM_DECIMAL_PLACES);
+        
+        /*--------------------------------------------------------------------*
+         &&&
+         After you tab out of a field, the format gets adjusted correctly.
+         It's messed up (not formatted) after you hit the calc button.  It's not
+         just the long fractional stuff.  Whole numbers show up as n.0 instead
+         of n.00.
+         Is there something that needs to happen in field.setText() in actionPerformed()?
+         *--------------------------------------------------------------------*/
+        
+        valueEditFormat = NumberFormat.getNumberInstance();
+        valueEditFormat.setMinimumFractionDigits(2);
+        valueEditFormat.setMaximumFractionDigits(NUM_DECIMAL_PLACES);
+        
+    } // setUpFormats()
+    
+    /*========================================================================*
      roundDouble()
+     
+     The intent here is to round the result to sidestep floating point inaccuracy
+     beyond the 13th decimal place.
      *========================================================================*/
     private double roundDouble
     ( double aDouble
     )
     {
-        final int    NUM_DECIMAL_PLACES = 4;
-        final double FACTOR             = Math.pow(10, NUM_DECIMAL_PLACES);
-        double    result                = aDouble;
-        
-        result = Math.round( result * FACTOR) / FACTOR;
-        
-        return result;
+        // return Math.round( aDouble * ROUND_FACTOR) / ROUND_FACTOR;
+        return aDouble;
         
     } // roundDouble
   
@@ -581,6 +647,9 @@ public class TriangleGUI
                             )
                         )
                     );
+                // &&& test hack
+                mPainter.repaint();
+                mPainter.setVerticies( 0,0,0,0,0,0 );
                
             } // if solution succeeded
             else
@@ -614,6 +683,11 @@ public class TriangleGUI
                             , 0.0
                             , 0.0
                             );
+            // &&& test hack
+            
+            mPainter.repaint();
+            mPainter.setVerticies( 0,0,0,0,0,0 );
+
             /*
             JOptionPane.showMessageDialog( null
                                          , "Reset all to zero"
@@ -642,5 +716,63 @@ public class TriangleGUI
     */
 
 } // class TriangleGUI
+
+class graphPainter extends Component
+{
+    public int mGrphWndwTopX = 0;
+    public int mGrphWndwTopY = 0;
+    public int mGrphWndwBtmX = 0;
+    public int mGrphWndwBtmY = 0;
+
+    public int mVertexAX = 0;
+    public int mVertexAY = 0;
+    public int mVertexBX = 0;
+    public int mVertexBY = 0;
+    public int mVertexCX = 0;
+    public int mVertexCY = 0;
+    
+    // &&& you'll have to stop putting off the array implementation...
+    public void setVerticies
+    ( int aVertexAX
+    , int aVertexAY
+    , int aVertexBX
+    , int aVertexBY
+    , int aVertexCX
+    , int aVertexCY
+    )
+    {
+        mVertexAX = aVertexAX;
+        mVertexAY = aVertexAY;
+        mVertexBX = aVertexBX;
+        mVertexBY = aVertexBY;
+        mVertexBY = aVertexCX;
+        mVertexCY = aVertexCY;
+        
+        repaint();
+    } // setVerticies
+
+    public void paint(Graphics g) 
+    {
+        // &&& I don't really know what this code is supposed to do...
+        Graphics2D g2 = (Graphics2D) g;
+        Composite origComposite;
+        origComposite = g2.getComposite();
+
+        // &&& So far, I have been unable to reach this code...
+        g.drawLine( mGrphWndwTopX
+                  , mGrphWndwTopY
+                  , mGrphWndwBtmX
+                  , mGrphWndwBtmY
+                  );
+        g.drawRect( mGrphWndwTopX
+                  , mGrphWndwTopY
+                  , mGrphWndwBtmX - mGrphWndwTopX
+                  , mGrphWndwBtmY - mGrphWndwTopY
+                  );
+        // &&& This wants arrays of x and y integers
+        // g.drawPolygon(xPoints, yPoints, 3);
+    }
+} // graphPainter()
+
 
 
