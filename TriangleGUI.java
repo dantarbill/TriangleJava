@@ -122,9 +122,20 @@ public class TriangleGUI
     /*========================================================================*
      Graphic Panel data...
      *========================================================================*/
-    JPanel  mGraphicPanel = null; // holds triangle graphic
+    JPanel  mGraphicPanel  = null; // holds triangle graphic
     
-    graphPainter  mPainter = null;
+    public int mGrphWndwTopX = 0;
+    public int mGrphWndwTopY = 0;
+    public int mGrphWndwBtmX = 0;
+    public int mGrphWndwBtmY = 0;
+
+    public int mVertexAX = 0;
+    public int mVertexAY = 0;
+    public int mVertexBX = 0;
+    public int mVertexBY = 0;
+    public int mVertexCX = 0;
+    public int mVertexCY = 0;
+
     
     /*========================================================================*
      TriangleGUI() constructor
@@ -153,8 +164,8 @@ public class TriangleGUI
         
         mButtonPanel.requestFocus();
         
-        mPainter.setVerticies( 0,0,0,0,0,0 );
-
+        setVerticies( 0,0,0,0,0,0 );
+        
         // buttonPanel.setVisible(true);
         setVisible(true); // display this frame
     } // TriangleGUI constructor
@@ -221,12 +232,10 @@ public class TriangleGUI
         final int grphWndwBtmX = rgtX;
         final int grphWndwBtmY = btmRowY;
         
-        mPainter = new graphPainter();
-        
-        mPainter.mGrphWndwTopX = fieldWidth + sidePadding;
-        mPainter.mGrphWndwTopY = topPadding + (2 * fieldHeight);
-        mPainter.mGrphWndwBtmX = rgtX;
-        mPainter.mGrphWndwBtmY = btmRowY;
+        mGrphWndwTopX = fieldWidth + sidePadding;
+        mGrphWndwTopY = topPadding + (2 * fieldHeight);
+        mGrphWndwBtmX = rgtX;
+        mGrphWndwBtmY = btmRowY;
 
         JPanel dataPanel  = new JPanel();
         
@@ -240,8 +249,6 @@ public class TriangleGUI
         dataPanel.setSize( dataPanelWidth
                          , dataPanelHeight
                          );
-        
-        dataPanel.add( "Center", mPainter );
         
         ////////////////////////////////////////////////////////////////////////
         // Create data fields...
@@ -647,10 +654,7 @@ public class TriangleGUI
                             )
                         )
                     );
-                // &&& test hack
-                mPainter.repaint();
-                mPainter.setVerticies( 0,0,0,0,0,0 );
-               
+                repaint();               
             } // if solution succeeded
             else
             {
@@ -683,10 +687,7 @@ public class TriangleGUI
                             , 0.0
                             , 0.0
                             );
-            // &&& test hack
-            
-            mPainter.repaint();
-            mPainter.setVerticies( 0,0,0,0,0,0 );
+            repaint();
 
             /*
             JOptionPane.showMessageDialog( null
@@ -697,7 +698,7 @@ public class TriangleGUI
             setVisible(true);  // show something
             */
         } // if mResetButton
-    
+        
     } // actionPerformed()
     
     /*
@@ -715,22 +716,28 @@ public class TriangleGUI
     } // class FormattedTextFieldListener
     */
 
-} // class TriangleGUI
+    public void paint(Graphics g) 
+    {
+        // &&& I don't really know what this code is supposed to do...
+        Graphics2D g2 = (Graphics2D) g;
+        Composite origComposite;
+    //        origComposite = g2.getComposite();
 
-class graphPainter extends Component
-{
-    public int mGrphWndwTopX = 0;
-    public int mGrphWndwTopY = 0;
-    public int mGrphWndwBtmX = 0;
-    public int mGrphWndwBtmY = 0;
+        // &&& So far, I have been unable to reach this code...
+        g2.drawLine( mGrphWndwTopX
+                  , mGrphWndwTopY
+                  , mGrphWndwBtmX
+                  , mGrphWndwBtmY
+                  );
+        g2.drawRect( mGrphWndwTopX
+                  , mGrphWndwTopY
+                  , mGrphWndwBtmX - mGrphWndwTopX
+                  , mGrphWndwBtmY - mGrphWndwTopY
+                  );
+        // &&& This wants arrays of x and y integers
+        // g.drawPolygon(xPoints, yPoints, 3);
+    } // paint()
 
-    public int mVertexAX = 0;
-    public int mVertexAY = 0;
-    public int mVertexBX = 0;
-    public int mVertexBY = 0;
-    public int mVertexCX = 0;
-    public int mVertexCY = 0;
-    
     // &&& you'll have to stop putting off the array implementation...
     public void setVerticies
     ( int aVertexAX
@@ -751,28 +758,6 @@ class graphPainter extends Component
         repaint();
     } // setVerticies
 
-    public void paint(Graphics g) 
-    {
-        // &&& I don't really know what this code is supposed to do...
-        Graphics2D g2 = (Graphics2D) g;
-        Composite origComposite;
-        origComposite = g2.getComposite();
 
-        // &&& So far, I have been unable to reach this code...
-        g.drawLine( mGrphWndwTopX
-                  , mGrphWndwTopY
-                  , mGrphWndwBtmX
-                  , mGrphWndwBtmY
-                  );
-        g.drawRect( mGrphWndwTopX
-                  , mGrphWndwTopY
-                  , mGrphWndwBtmX - mGrphWndwTopX
-                  , mGrphWndwBtmY - mGrphWndwTopY
-                  );
-        // &&& This wants arrays of x and y integers
-        // g.drawPolygon(xPoints, yPoints, 3);
-    }
-} // graphPainter()
-
-
+} // class TriangleGUI
 
