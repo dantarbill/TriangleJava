@@ -18,8 +18,6 @@ import java.awt.Graphics;
 import javax.swing.*;
 import javax.swing.text.*;
 
-
-
 /*========================================================================*
  TriangleGUI class
  *========================================================================*/
@@ -30,6 +28,7 @@ public class TriangleGUI
     ////////////////////////////////////////////////////////////////////////////
     // Member variables...
     ////////////////////////////////////////////////////////////////////////////
+
     // &&& Figure out what these fixups really represent
     protected final int GOK_PIXELS   = 7;
     protected final int TB_HEIGHT    = 30; // Top Bar Height
@@ -37,8 +36,6 @@ public class TriangleGUI
     protected final int    NUM_DECIMAL_PLACES  = 4;
     protected final int    NUM_ROUNDING_PLACES = 12;
     protected final double ROUND_FACTOR        = Math.pow(10, NUM_ROUNDING_PLACES);
-    
-    Triangle  mTriangle = null;
     
     /*========================================================================*
      Formatter stuff...
@@ -49,22 +46,16 @@ public class TriangleGUI
     /*========================================================================*
      Base Panel data...
      *========================================================================*/
-    protected final int mFrameWidth  = 500;
-    protected final int mFrameHeight = 400;
+    protected int mFrameWidth  = 500;
+    protected int mFrameHeight = 500;
     
-    // &&& Figure out how to get this from the system
-    protected int screenWidth  = 1920;
-    protected int screenHeight = 1200;
+    protected int screenWidth  = 0;
+    protected int screenHeight = 0;
     
-    // Center the frame on the screen...
-    protected int frameX      = ( (screenWidth  / 2) 
-                                - (mFrameWidth  / 2)
-                                );
-    protected int frameY      = ( (screenHeight / 2) 
-                                - (mFrameHeight / 2)
-                                );;
+    protected int frameX       = 0;
+    protected int frameY       = 0;
     
-    JPanel  mBasePanel    = null; // holds everything
+    JPanel  mBasePanel         = null; // holds everything
       
     /*========================================================================*
      Button Panel data...
@@ -82,6 +73,8 @@ public class TriangleGUI
     /*========================================================================*
      Data Panel data...
      *========================================================================*/
+    Triangle            mTriangle   = null;
+    
     JPanel              mDataPanel  = null; // holds data input fields
     // &&& Need a class to contain...
     //  dataField
@@ -111,6 +104,12 @@ public class TriangleGUI
     final String STR_ANGLE_B = "Angle B";
     final String STR_ANGLE_C = "Angle C";
     
+    /*------------------------------------------------------------------------*
+     &&&
+     There must be a better way to do this.  Java doen't seem to want to let you
+     simply increment/decrement an enumerated type and use the result as an int
+     index...
+     *------------------------------------------------------------------------*/
     final int    INDX_SID_A  = 0;
     final int    INDX_SID_B  = 1;
     final int    INDX_SID_C  = 2;
@@ -122,20 +121,7 @@ public class TriangleGUI
     /*========================================================================*
      Graphic Panel data...
      *========================================================================*/
-    JPanel  mGraphicPanel  = null; // holds triangle graphic
-    
-    public int mGrphWndwTopX = 0;
-    public int mGrphWndwTopY = 0;
-    public int mGrphWndwBtmX = 0;
-    public int mGrphWndwBtmY = 0;
-
-    public int mVertexAX = 0;
-    public int mVertexAY = 0;
-    public int mVertexBX = 0;
-    public int mVertexBY = 0;
-    public int mVertexCX = 0;
-    public int mVertexCY = 0;
-
+    GraphicsPanel  mGraphicPanel  = null; // holds triangle graphic
     
     /*========================================================================*
      TriangleGUI() constructor
@@ -146,10 +132,24 @@ public class TriangleGUI
     {
         super("Triangle Solutions GUI");
         
+        // Get screen size using the Toolkit class
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    
+        screenWidth  = (int) screenSize.getWidth();
+        screenHeight = (int) screenSize.getHeight();
+    
+        // Center the frame on the screen...
+        frameX      = ( (screenWidth  / 2) 
+                      - (mFrameWidth  / 2)
+                      );
+        frameY      = ( (screenHeight / 2) 
+                      - (mFrameHeight / 2)
+                      );
+
         mTriangle = aTriangle;
         
         setUpFormats();
-        
+        // &&& this may change when we get resize() working...
         setBounds( frameX
                  , frameY
                  , mFrameWidth  + (GOK_PIXELS * 2)
@@ -163,8 +163,6 @@ public class TriangleGUI
         con.add(mBasePanel); // add the base panel to frame
         
         mButtonPanel.requestFocus();
-        
-        setVerticies( 0,0,0,0,0,0 );
         
         // buttonPanel.setVisible(true);
         setVisible(true); // display this frame
@@ -195,17 +193,18 @@ public class TriangleGUI
     /*========================================================================*
      createDataPanel()
     
-     Sets up the data button...
+     Sets up the data fields...
     
      Since this takes up all the vertical space that the button panel *doesn't*
      take, we need to create the button panel *first* in order to get the value
-     of 
+     of mButtonPanelHeight
     
      *=========================================================================*/
     private JPanel createDataPanel()
     {
-        final int dataPanelWidth  = mFrameWidth;
-        final int dataPanelHeight = mFrameHeight - mButtonPanelHeight;
+        // &&& needs to be in resize()
+        int dataPanelWidth  = mFrameWidth;
+        int dataPanelHeight = mFrameHeight - mButtonPanelHeight;
         
         final int fieldWidth  = 70;
         final int fieldHeight = 30;
@@ -226,17 +225,6 @@ public class TriangleGUI
                               - ( fieldWidth     / 2 );
         final int rgtX        = ( dataPanelWidth - fieldWidth - sidePadding );
         
-        // &&& Oops!  These values need to be accessible outside this function
-        final int grphWndwTopX = fieldWidth + sidePadding;
-        final int grphWndwTopY = topPadding + (2 * fieldHeight);
-        final int grphWndwBtmX = rgtX;
-        final int grphWndwBtmY = btmRowY;
-        
-        mGrphWndwTopX = fieldWidth + sidePadding;
-        mGrphWndwTopY = topPadding + (2 * fieldHeight);
-        mGrphWndwBtmX = rgtX;
-        mGrphWndwBtmY = btmRowY;
-
         JPanel dataPanel  = new JPanel();
         
         ////////////////////////////////////////////////////////////////////////
@@ -364,6 +352,24 @@ public class TriangleGUI
         
         dataPanel.add( mDataSideB  );
         dataPanel.add( mLabelSideB );
+        
+        mGraphicPanel = new GraphicsPanel();
+        mGraphicPanel.setLayout(null);
+        mGraphicPanel.setLocation( fieldWidth + sidePadding
+                                 , topPadding + (2 * fieldHeight)
+                                 );
+        mGraphicPanel.setSize( dataPanelWidth
+                             - (( fieldWidth + sidePadding ) * 2 )
+                             , dataPanelHeight
+                             - (4 * fieldHeight)
+                             - topPadding
+                             - btmPadding
+                             );
+        mGraphicPanel.setOpaque(false);
+        
+        dataPanel.add( mGraphicPanel );
+        
+        mGraphicPanel.resize();
        
         return dataPanel;
         
@@ -488,6 +494,7 @@ public class TriangleGUI
         mCalcButton.setSize( buttonWidth
                            , buttonHeight  
                            );
+        // &&& needs to be in resize()
         int calcButtonX = ( buttonPanelWidth 
                           - ( ( buttonWidth * buttonCount )     // buttons width
                             + ( ( buttonCount - 1 ) * horzPad ) // padding width
@@ -513,6 +520,7 @@ public class TriangleGUI
         mResetButton.setSize( buttonWidth
                             , buttonHeight  
                             );
+        // &&& needs to be in resize()
         mResetButton.setLocation( calcButtonX + buttonWidth + horzPad // reset to right of calc
                                 , vertPad / 2 
                                 );
@@ -670,9 +678,8 @@ public class TriangleGUI
         else if ( source == mResetButton )
         {
             mResetLabel.setText("Reset");
-            // &&& This needs to...
+
             // Reset all data fields to zero
-            
             mDataSideA.setValue ( new Double( 0.0 ) ); 
             mDataSideB.setValue ( new Double( 0.0 ) ); 
             mDataSideC.setValue ( new Double( 0.0 ) ); 
@@ -689,14 +696,6 @@ public class TriangleGUI
                             );
             repaint();
 
-            /*
-            JOptionPane.showMessageDialog( null
-                                         , "Reset all to zero"
-                                         , "Message"
-                                         , JOptionPane.PLAIN_MESSAGE
-                                         );
-            setVisible(true);  // show something
-            */
         } // if mResetButton
         
     } // actionPerformed()
@@ -716,48 +715,106 @@ public class TriangleGUI
     } // class FormattedTextFieldListener
     */
 
-    public void paint(Graphics g) 
+    /*========================================================================*
+     class GraphicsPanel
+    
+     Panel that hosts the triagnle graphic embedded in the dataPanel (mDataPanel).
+     
+     We needed a subclass where we could override paint() and get stuff painted.
+    
+     *========================================================================*/
+    protected class GraphicsPanel
+        extends  JPanel
     {
-        // &&& I don't really know what this code is supposed to do...
-        Graphics2D g2 = (Graphics2D) g;
-        Composite origComposite;
-    //        origComposite = g2.getComposite();
+        public int mWidth   = 0;
+        public int mHeight  = 0;
 
-        // &&& So far, I have been unable to reach this code...
-        g2.drawLine( mGrphWndwTopX
-                  , mGrphWndwTopY
-                  , mGrphWndwBtmX
-                  , mGrphWndwBtmY
-                  );
-        g2.drawRect( mGrphWndwTopX
-                  , mGrphWndwTopY
-                  , mGrphWndwBtmX - mGrphWndwTopX
-                  , mGrphWndwBtmY - mGrphWndwTopY
-                  );
-        // &&& This wants arrays of x and y integers
-        // g.drawPolygon(xPoints, yPoints, 3);
-    } // paint()
-
-    // &&& you'll have to stop putting off the array implementation...
-    public void setVerticies
-    ( int aVertexAX
-    , int aVertexAY
-    , int aVertexBX
-    , int aVertexBY
-    , int aVertexCX
-    , int aVertexCY
-    )
-    {
-        mVertexAX = aVertexAX;
-        mVertexAY = aVertexAY;
-        mVertexBX = aVertexBX;
-        mVertexBY = aVertexBY;
-        mVertexBY = aVertexCX;
-        mVertexCY = aVertexCY;
+        public int mVertexAX = 0;
+        public int mVertexAY = 0;
+        public int mVertexBX = 0;
+        public int mVertexBY = 0;
+        public int mVertexCX = 0;
+        public int mVertexCY = 0;
         
-        repaint();
-    } // setVerticies
+        /*--------------------------------------------------------------------*
+        
+         *--------------------------------------------------------------------*/
+        private double mBBDiagAngle = 0.0;
 
+        /*====================================================================*
+         GraphicsPanel() constructor
+         *====================================================================*/
+        GraphicsPanel()
+        {
+            super();
+        } // GraphicsPanel() constructor
+        
+        // &&& you'll have to stop putting off the array implementation...
+        public void setVerticies
+        ( int aVertexAX
+        , int aVertexAY
+        , int aVertexBX
+        , int aVertexBY
+        , int aVertexCX
+        , int aVertexCY
+        )
+        {
+            mVertexAX = aVertexAX;
+            mVertexAY = aVertexAY;
+            mVertexBX = aVertexBX;
+            mVertexBY = aVertexBY;
+            mVertexBY = aVertexCX;
+            mVertexCY = aVertexCY;
+
+            repaint();
+        } // setVerticies
+        
+        public void resize()
+        {
+            Dimension size = getSize();
+            mWidth  = size.width;
+            mHeight = size.height;
+            
+            // mBBDiagAngle = 
+            
+        } // resize()
+
+        public void paint(Graphics g) 
+        {
+            // &&& I don't really know what this code is supposed to do...
+            // Graphics2D g2 = (Graphics2D) g;
+
+            // Dimension size = getSize();
+
+            // The -1 bit is because a width of 10 is from 0..9...
+            /*
+            g.drawLine( 0
+                      , 0
+                      , size.width  - 1
+                      , size.height - 1
+                      );
+            g.drawRect( 0
+                      , 0
+                      , size.width  - 1
+                      , size.height - 1
+                      );
+            */
+            
+            // Tacky way to render an "equilateral" triangle...
+            int[] xPoints = { 0
+                            , mWidth / 2 
+                            , mWidth - 1 
+                            };
+            int[] yPoints = { mHeight - 1
+                            , 0
+                            , mHeight - 1
+                            };
+            g.drawPolygon(xPoints, yPoints, 3);
+        } // paint()
+
+    } // class GraphicsPanel
+    
 
 } // class TriangleGUI
+
 
