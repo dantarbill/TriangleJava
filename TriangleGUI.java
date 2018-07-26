@@ -46,36 +46,30 @@ public class TriangleGUI
     /*========================================================================*
      Base Panel data...
      *========================================================================*/
-    protected int mFrameWidth  = 500;
-    protected int mFrameHeight = 500;
+    protected int    mFrameWidth  = 500;
+    protected int    mFrameHeight = 500;
     
-    protected int screenWidth  = 0;
-    protected int screenHeight = 0;
-    
-    protected int frameX       = 0;
-    protected int frameY       = 0;
-    
-    JPanel  mBasePanel         = null; // holds everything
+    protected JPanel mBasePanel = null; // holds everything
       
     /*========================================================================*
      Button Panel data...
      *========================================================================*/
-    JPanel  mButtonPanel  = null; // holds buttons
+    private JPanel  mButtonPanel  = null; // holds buttons
     
-    JButton mCalcButton   = null;
-    JLabel  mCalcLabel    = null;
+    private JButton mCalcButton   = null;
+    private JLabel  mCalcLabel    = null;
     
-    JButton mResetButton  = null;
-    JLabel  mResetLabel   = null;
+    private JButton mResetButton  = null;
+    private JLabel  mResetLabel   = null;
     
-    private int mButtonPanelHeight = 0;
+    protected int mButtonPanelHeight = 0;
 
     /*========================================================================*
      Data Panel data...
      *========================================================================*/
-    Triangle            mTriangle   = null;
+    protected Triangle mTriangle   = null;
     
-    JPanel              mDataPanel  = null; // holds data input fields
+    protected JPanel   mDataPanel  = null; // holds data input fields
     // &&& Need a class to contain...
     //  dataField
     //  label
@@ -121,7 +115,7 @@ public class TriangleGUI
     /*========================================================================*
      Graphic Panel data...
      *========================================================================*/
-    GraphicsPanel  mGraphicPanel  = null; // holds triangle graphic
+    private GraphicsPanel  mGraphicPanel  = null; // holds triangle graphic
     
     /*========================================================================*
      TriangleGUI() constructor
@@ -135,16 +129,16 @@ public class TriangleGUI
         // Get screen size using the Toolkit class
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     
-        screenWidth  = (int) screenSize.getWidth();
-        screenHeight = (int) screenSize.getHeight();
+        int screenWidth  = (int) screenSize.getWidth();
+        int screenHeight = (int) screenSize.getHeight();
     
         // Center the frame on the screen...
-        frameX      = ( (screenWidth  / 2) 
-                      - (mFrameWidth  / 2)
-                      );
-        frameY      = ( (screenHeight / 2) 
-                      - (mFrameHeight / 2)
-                      );
+        int frameX      = ( (screenWidth  / 2) 
+                        - (mFrameWidth  / 2)
+                        );
+        int frameY      = ( (screenHeight / 2) 
+                        - (mFrameHeight / 2)
+                        );
 
         mTriangle = aTriangle;
         
@@ -662,7 +656,9 @@ public class TriangleGUI
                             )
                         )
                     );
-                repaint();               
+                
+                mGraphicPanel.getVerticies();
+              
             } // if solution succeeded
             else
             {
@@ -694,7 +690,8 @@ public class TriangleGUI
                             , 0.0
                             , 0.0
                             );
-            repaint();
+
+            mGraphicPanel.getVerticies();
 
         } // if mResetButton
         
@@ -726,18 +723,24 @@ public class TriangleGUI
     protected class GraphicsPanel
         extends  JPanel
     {
+        /*--------------------------------------------------------------------*
+        The width and height of the bounding box, which is the same as the
+        dimensions of the graphics panel...
+         *--------------------------------------------------------------------*/
         public int mWidth   = 0;
         public int mHeight  = 0;
-
-        public int mVertexAX = 0;
-        public int mVertexAY = 0;
-        public int mVertexBX = 0;
-        public int mVertexBY = 0;
-        public int mVertexCX = 0;
-        public int mVertexCY = 0;
         
         /*--------------------------------------------------------------------*
-        
+        Since drawPolygon() wants separate x and y arrays, rather than arrays of
+        points, we'll have to set up our verticies the same way...
+         *--------------------------------------------------------------------*/
+        private int[] mVertexX = { 0, 0, 0};
+        private int[] mVertexY = { 0, 0, 0}; 
+
+        /*--------------------------------------------------------------------*
+         The bounding box diagonal angle is used to determine whether a side
+         will intersect the sides of the bounding box (angle < mBBDiagAngle) or
+         the top of the bounding box (angle >= mBBDiagAngle).
          *--------------------------------------------------------------------*/
         private double mBBDiagAngle = 0.0;
 
@@ -749,25 +752,98 @@ public class TriangleGUI
             super();
         } // GraphicsPanel() constructor
         
-        // &&& you'll have to stop putting off the array implementation...
-        public void setVerticies
-        ( int aVertexAX
-        , int aVertexAY
-        , int aVertexBX
-        , int aVertexBY
-        , int aVertexCX
-        , int aVertexCY
-        )
+        /*====================================================================*
+         getVerticies()
+        
+         Calculates the pixel positions of the verticies of the triangle data
+         currently in mTriangle, scaled to fit in the bounding box of the
+         graphics panel...
+         *====================================================================*/
+        public void getVerticies()
         {
-            mVertexAX = aVertexAX;
-            mVertexAY = aVertexAY;
-            mVertexBX = aVertexBX;
-            mVertexBY = aVertexBY;
-            mVertexBY = aVertexCX;
-            mVertexCY = aVertexCY;
+            // If all the sides and angles are known, we get vericies for the
+            // resulting triangle...
+            if (  mTriangle.sides.getKnownCount () == 3
+               && mTriangle.angles.getKnownCount() == 3
+               )
+            {
+                // Find the longest side...
+                TriangleData.DataID longestSideID  = TriangleData.DataID.DATA_INVALID;
+                double              longestSideLen = 0.0;
+                // These avoid repeated calls to get() to retrieve the same value
+                // (That may not be all that significant)
+                double              sideLen        = 0.0;
+                double              sideALen       = 0.0;
+                double              sideBLen       = 0.0;
+                double              sideCLen       = 0.0;
+                
+                // Iterate over the set of DataID enum values...
+                for ( TriangleData.DataID sideID: TriangleData.DataID.values() )
+                {
+                    if ( sideID != TriangleData.DataID.DATA_INVALID )
+                    {
+                        sideLen = mTriangle.sides.get(sideID);
+                        
+                        // stash all the side values while we're at it...
+                        switch (sideID)
+                        {
+                            case DATA_A :
+                                sideALen = sideLen;
+                                break;
+                            case DATA_B :
+                                sideBLen = sideLen;
+                                break;
+                            case DATA_C :
+                                sideCLen = sideLen;
+                                break;
+                        } // switch
+                        
+                        if ( sideLen > longestSideLen )
+                        {
+                            longestSideLen = sideLen;
+                            longestSideID  = sideID;
+                        } // if longest
+                    } // if not invalid
+                } // for each side
+                
+                // if longest side is C (the base)...
+                if ( TriangleData.DataID.DATA_C == longestSideID )
+                {
+                    // Scale side A and B in terms of the width of the bounding box (C).
+                    // use lawOfSines() to find vertex at angle C
+                } // if side C is longest
+                else 
+                {
+                    /*------------------------------------------------------------*
+                     The longest side is either A or B.  In either case, the steps
+                     are similar with exception that SideA starts at the lower Right
+                     corner and SideB from the lower Left.  So, we set the boolean
+                     flag useLwrRight true if SideA is the long side and use that
+                     to select which way we're going...
+                     *------------------------------------------------------------*/
+                    /*------------------------------------------------------------*
+                     If AngleB(else AngleA) < mBBDiagAngle 
+                     then SideA(else SideB) intersects left(else right) bounding box
+                     side.
+                     Get the pixel length of SideA(else SideB)
+                     Get the pixel length
+                     *------------------------------------------------------------*/
+                } // else longest is A or B
 
+            } // if all sides/angles known
+            else // we just draw an equalateral(ish) triangle...
+            {
+                mVertexX[0] = 0;
+                mVertexX[1] = mWidth / 2; 
+                mVertexX[2] = mWidth - 1; 
+
+                mVertexY[0] = mHeight - 1;
+                mVertexY[1] = 0;
+                mVertexY[2] = mHeight - 1;
+            } // else draw default
+            
             repaint();
-        } // setVerticies
+        } // getVerticies
         
         public void resize()
         {
@@ -775,32 +851,39 @@ public class TriangleGUI
             mWidth  = size.width;
             mHeight = size.height;
             
-            // mBBDiagAngle = 
+            double a = size.height;
+            double b = size.width;  
+            
+            // Code heisted from Triangle.SAS()...
+            double cosGamma = Math.cos( Math.toRadians( 90.0 ) );
+            
+            double c = Math.sqrt( ((a * a) + (b * b))
+                                - ( 2 * a * b * cosGamma )
+                                );
+                        
+            mBBDiagAngle = mTriangle.lawOfCosines( a, b, c );
+            getVerticies();
             
         } // resize()
 
         public void paint(Graphics g) 
         {
-            // &&& I don't really know what this code is supposed to do...
-            // Graphics2D g2 = (Graphics2D) g;
-
-            // Dimension size = getSize();
 
             // The -1 bit is because a width of 10 is from 0..9...
-            /*
             g.drawLine( 0
                       , 0
-                      , size.width  - 1
-                      , size.height - 1
+                      , mWidth  - 1
+                      , mHeight - 1
                       );
             g.drawRect( 0
                       , 0
-                      , size.width  - 1
-                      , size.height - 1
+                      , mWidth  - 1
+                      , mHeight - 1
                       );
-            */
+            
             
             // Tacky way to render an "equilateral" triangle...
+            /*
             int[] xPoints = { 0
                             , mWidth / 2 
                             , mWidth - 1 
@@ -810,6 +893,9 @@ public class TriangleGUI
                             , mHeight - 1
                             };
             g.drawPolygon(xPoints, yPoints, 3);
+            */
+            g.drawPolygon( mVertexX, mVertexY, 3);
+            
         } // paint()
 
     } // class GraphicsPanel

@@ -314,7 +314,7 @@ public abstract class TriangleData
                                  , dID.name()
                                  , get(dID)
                                  );
-            } // if
+            } // if not invalid
         } // for
     } // print()
 
