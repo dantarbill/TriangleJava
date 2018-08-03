@@ -876,20 +876,41 @@ public class TriangleGUI
                 } // if side C is longest
                 else 
                 {
-                    /*------------------------------------------------------------*
-                     The longest side is either A or B.  In either case, the steps
-                     are similar with exception that SideA starts at the lower Right
-                     corner and SideB from the lower Left.  So, we set the boolean
-                     flag useLwrRight true if SideA is the long side and use that
-                     to select which way we're going...
-                     *------------------------------------------------------------*/
-                    /*------------------------------------------------------------*
-                     If AngleB(else AngleA) < mBBDiagAngle 
-                     then SideA(else SideB) intersects left(else right) bounding box
-                     side.
-                     Get the pixel length of SideA(else SideB)
-                     Get the pixel length
-                     *------------------------------------------------------------*/
+                    /*--------------------------------------------------------*
+                    The longest side is either A or B.  In either case, the
+                    steps are similar with exception that SideA starts at the
+                    lower Right corner and SideB from the lower Left.  So, we
+                    set the boolean flag useLwrRight true if SideA is the long
+                    side and use that to select which way we're going...
+                    *---------------------------------------------------------*/
+                    boolean useLwrRight = longestSideID == TriangleData.DataID.DATA_A
+                                        ? true
+                                        : false;
+                    /*--------------------------------------------------------*
+                    If AngleB(else AngleA) < mBBDiagAngle 
+                    then SideA(else SideB) intersects left(else right) bounding
+                    box side...
+                    *---------------------------------------------------------*/
+                    double angleA = mTriangle.angles.get(TriangleData.DataID.DATA_A);
+                    double angleB = mTriangle.angles.get(TriangleData.DataID.DATA_B);
+                    
+                    boolean intersectsTop = useLwrRight
+                                          ? angleB < mBBDiagAngle
+                                          : angleA < mBBDiagAngle;
+                    /*--------------------------------------------------------*
+                    Get the pixel length of SideA(else SideB)
+                    That is the length of the line from the vertext at
+                    AngleB(else AngleA) to the bounding box.
+                    *---------------------------------------------------------*/
+                    /*--------------------------------------------------------*
+                    Set vertex/angle C at the point where we intersect the
+                    bounding box...
+                    *---------------------------------------------------------*/
+                    /*--------------------------------------------------------*
+                    Get the pixel length for the other sides based on the scale
+                    factor for the longest side.
+                    *---------------------------------------------------------*/
+                    // double lenToPxlRatio = ? / longestSideLen;
                 } // else longest is A or B
 
             } // if all sides/angles known
