@@ -9,6 +9,7 @@
 
  *============================================================================*/
 
+
 import java.lang.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -657,7 +658,7 @@ public class TriangleGUI
                         )
                     );
                 
-                mGraphicPanel.getVerticies();
+                mGraphicPanel.calcVerticies();
               
             } // if solution succeeded
             else
@@ -691,7 +692,7 @@ public class TriangleGUI
                             , 0.0
                             );
 
-            mGraphicPanel.getVerticies();
+            mGraphicPanel.calcVerticies();
 
         } // if mResetButton
         
@@ -753,13 +754,13 @@ public class TriangleGUI
         } // GraphicsPanel() constructor
         
         /*====================================================================*
-         getVerticies()
+         calcVerticies()
         
          Calculates the pixel positions of the verticies of the triangle data
          currently in mTriangle, scaled to fit in the bounding box of the
          graphics panel...
          *====================================================================*/
-        public void getVerticies()
+        public void calcVerticies()
         {
             // If all the sides and angles are known, we get vericies for the
             // resulting triangle...
@@ -770,8 +771,13 @@ public class TriangleGUI
                 // Find the longest side...
                 TriangleData.DataID longestSideID  = TriangleData.DataID.DATA_INVALID;
                 double              longestSideLen = 0.0;
-                // These avoid repeated calls to get() to retrieve the same value
-                // (That may not be all that significant)
+                /*------------------------------------------------------------*
+                 These avoid repeated calls to get() to retrieve the same value
+                 This may not be all that significant from a performance
+                 standpoint, but it makes the code a lot easier to read since
+                 the triangle data identifiers ended up being such a pain in the
+                 @$$...
+                 *------------------------------------------------------------*/
                 double              sideLen        = 0.0;
                 double              sideALen       = 0.0;
                 double              sideBLen       = 0.0;
@@ -806,11 +812,67 @@ public class TriangleGUI
                     } // if not invalid
                 } // for each side
                 
+                // Get scale factors relative to the longest side...
+                double sideAScale = sideALen / longestSideLen;
+                double sideBScale = sideBLen / longestSideLen;
+                double sideCScale = sideCLen / longestSideLen;
+                
+                /*------------------------------------------------------------*
+                 &&&
+                 Note that there's a special case with an equilateral triangle
+                 where all the sides are equal, but it won't necessarily select
+                 the "base" (C) as the longest side.
+                 *------------------------------------------------------------*/
+                if (  sideALen == sideBLen
+                   && sideBLen == sideCLen
+                   )
+                {
+                    longestSideID = TriangleData.DataID.DATA_C;
+                }
+                
                 // if longest side is C (the base)...
                 if ( TriangleData.DataID.DATA_C == longestSideID )
                 {
-                    // Scale side A and B in terms of the width of the bounding box (C).
-                    // use lawOfSines() to find vertex at angle C
+                    /*--------------------------------------------------------*
+                     lenToPxlRatio is the ratio of longestSideLen to mWidth.
+                     It's what we use to scale lengths to pixles...
+                     *--------------------------------------------------------*/
+                    double lenToPxlRatio = mWidth / longestSideLen;
+                    /*--------------------------------------------------------*
+                     Scale side A in terms of pixels...
+                     (We don't need side B since we just want to locate vertex C)
+                     *--------------------------------------------------------*/
+                    double sideBPxlLen = ( sideBLen * sideBScale ) * lenToPxlRatio;
+                    /*--------------------------------------------------------* 
+                     vertex/AngleA is at the lower left corner
+                     If you drop a line from AngleC (at the top) it forms a
+                     right triangle where we can use the base and vertical side
+                     to get AngleC's vertex co-ordinates.  SideB is the
+                     hypotenuse.
+                     *--------------------------------------------------------*/
+                    double angleA = mTriangle.angles.get(TriangleData.DataID.DATA_B);
+                    double beta   = 90.0;
+                    double gamma  = 90.0 - angleA;
+                    /*--------------------------------------------------------*
+                     lawOfSines()
+                     Given angles alpha and gamma and the side c (opposite the
+                     angle gamma), returns the length of side a (opposite angle
+                     alpha).
+                     *--------------------------------------------------------*/
+                    double sideAPxlLen = mTriangle.lawOfSines( gamma , beta, sideBPxlLen );
+                    double sideCPxlLen = mTriangle.lawOfSines( angleA, beta, sideBPxlLen );
+
+                    // Vertex for AngleA...
+                    mVertexX[0] = 0;
+                    mVertexY[0] = mHeight - 1;
+                    
+                    // Vertex for AngleB...
+                    mVertexX[1] = mWidth  - 1; 
+                    mVertexY[1] = mHeight - 1;
+
+                    mVertexX[2] = (int)sideAPxlLen; 
+                    mVertexY[2] = mHeight - (int)sideCPxlLen;
+                    
                 } // if side C is longest
                 else 
                 {
@@ -843,7 +905,7 @@ public class TriangleGUI
             } // else draw default
             
             repaint();
-        } // getVerticies
+        } // calcVerticies
         
         public void resize()
         {
@@ -862,38 +924,29 @@ public class TriangleGUI
                                 );
                         
             mBBDiagAngle = mTriangle.lawOfCosines( a, b, c );
-            getVerticies();
+            calcVerticies();
             
         } // resize()
 
         public void paint(Graphics g) 
         {
-
+            boolean bDrawBoundingBox = false;
+            
             // The -1 bit is because a width of 10 is from 0..9...
-            g.drawLine( 0
-                      , 0
-                      , mWidth  - 1
-                      , mHeight - 1
-                      );
-            g.drawRect( 0
-                      , 0
-                      , mWidth  - 1
-                      , mHeight - 1
-                      );
+            if ( bDrawBoundingBox )
+            {
+                g.drawLine( 0
+                          , 0
+                          , mWidth  - 1
+                          , mHeight - 1
+                          );
+                g.drawRect( 0
+                          , 0
+                          , mWidth  - 1
+                          , mHeight - 1
+                          );
+            } // if ( bDrawBoundingBox
             
-            
-            // Tacky way to render an "equilateral" triangle...
-            /*
-            int[] xPoints = { 0
-                            , mWidth / 2 
-                            , mWidth - 1 
-                            };
-            int[] yPoints = { mHeight - 1
-                            , 0
-                            , mHeight - 1
-                            };
-            g.drawPolygon(xPoints, yPoints, 3);
-            */
             g.drawPolygon( mVertexX, mVertexY, 3);
             
         } // paint()
