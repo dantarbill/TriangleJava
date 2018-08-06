@@ -812,11 +812,6 @@ public class TriangleGUI
                     } // if not invalid
                 } // for each side
                 
-                // Get scale factors relative to the longest side...
-                double sideAScale = sideALen / longestSideLen;
-                double sideBScale = sideBLen / longestSideLen;
-                double sideCScale = sideCLen / longestSideLen;
-                
                 /*------------------------------------------------------------*
                  &&&
                  Note that there's a special case with an equilateral triangle
@@ -842,7 +837,7 @@ public class TriangleGUI
                      Scale side A in terms of pixels...
                      (We don't need side B since we just want to locate vertex C)
                      *--------------------------------------------------------*/
-                    double sideBPxlLen = ( sideBLen * sideBScale ) * lenToPxlRatio;
+                    double sideBPxlLen = sideBLen * lenToPxlRatio;
                     /*--------------------------------------------------------* 
                      vertex/AngleA is at the lower left corner
                      If you drop a line from AngleC (at the top) it forms a
@@ -881,7 +876,7 @@ public class TriangleGUI
                     steps are similar with exception that SideA starts at the
                     lower Right corner and SideB from the lower Left.  So, we
                     set the boolean flag useLwrRight true if SideA is the long
-                    side and use that to select which way we're going...
+                    side and use that to select where we're starting from...
                     *---------------------------------------------------------*/
                     boolean useLwrRight = longestSideID == TriangleData.DataID.DATA_A
                                         ? true
@@ -895,22 +890,108 @@ public class TriangleGUI
                     double angleB = mTriangle.angles.get(TriangleData.DataID.DATA_B);
                     
                     boolean intersectsTop = useLwrRight
-                                          ? angleB < mBBDiagAngle
-                                          : angleA < mBBDiagAngle;
+                                          ? angleB > mBBDiagAngle
+                                          : angleA > mBBDiagAngle;
                     /*--------------------------------------------------------*
                     Get the pixel length of SideA(else SideB)
                     That is the length of the line from the vertext at
                     AngleB(else AngleA) to the bounding box.
+                    To get that length, we create a right triangle with mWidth
+                    as the base length (if !intersectsTop) or mHeight.
                     *---------------------------------------------------------*/
+                    double gamma = useLwrRight
+                                 ? angleB
+                                 : angleA;
+                    double alpha = 90.0 -
+                                   ( useLwrRight
+                                   ? angleB
+                                   : angleA
+                                   );
+                    double beta  = 90.0;
+                    double baseLen = intersectsTop
+                                   ? mHeight
+                                   : mWidth;
+                    /*--------------------------------------------------------*
+                     lawOfSines()
+                     Given angles alpha and gamma and the side c (opposite the
+                     angle gamma), returns the length of side a (opposite angle
+                     alpha).
+                    &&& this doesn't currently factor in when !intersectsTop...
+                     *--------------------------------------------------------*/
+                    double pxlSideLen = mTriangle.lawOfSines( beta 
+                                                            , gamma
+                                                            , baseLen 
+                                                            );
+                    /*--------------------------------------------------------*
+                    Now that we have the length of the longest side in pixels,
+                    we also have what we need to get to position along the
+                    bounding box boundary where that line intersects, which
+                    gives us what we need to locate vertex/angle C...
+                    *---------------------------------------------------------*/
+                    /*--------------------------------------------------------*
+                     lenToPxlRatio is the ratio of longestSideLen to pxlSideLen.
+                     It's what we use to scale lengths to pixles...
+                     *--------------------------------------------------------*/
+                    double lenToPxlRatio = pxlSideLen / longestSideLen;
+                    /*--------------------------------------------------------*
+                    Scale side C in terms of pixels...
+                    (We don't need side A/B since we already have one of them)
+                     *--------------------------------------------------------*/
+                    double sideCPxlLen = sideCLen * lenToPxlRatio;
+                    /*--------------------------------------------------------*
+                    Get the pixel length for the other sides based on the scale
+                    factor for the longest side.
+                    *---------------------------------------------------------*/
+                    // Vertex for AngleA...
+                    mVertexX[0] = ( useLwrRight
+                                  ? mWidth  - (int)sideCPxlLen
+                                  : 0
+                                  );
+                    mVertexY[0] = mHeight - 1;
+
+                    // Vertex for AngleB...
+                    mVertexX[1] = ( useLwrRight
+                                  ? mWidth  - 1
+                                  : mWidth  - (int)sideCPxlLen
+                                  );
+                    mVertexY[1] = mHeight - 1;
+
                     /*--------------------------------------------------------*
                     Set vertex/angle C at the point where we intersect the
                     bounding box...
                     *---------------------------------------------------------*/
                     /*--------------------------------------------------------*
-                    Get the pixel length for the other sides based on the scale
-                    factor for the longest side.
-                    *---------------------------------------------------------*/
-                    // double lenToPxlRatio = ? / longestSideLen;
+                     lawOfSines()
+                     Given angles alpha and gamma and the side c (opposite the
+                     angle gamma), returns the length of side a (opposite angle
+                     alpha).
+                     *--------------------------------------------------------*/
+                    if ( intersectsTop )
+                    {
+                        double pxlBBTopLen = mTriangle.lawOfSines( alpha 
+                                                                 , gamma
+                                                                 , baseLen 
+                                                                 );
+                        mVertexX[2] = ( useLwrRight
+                                      ? mWidth - (int)pxlBBTopLen
+                                      : (int)pxlBBTopLen
+                                      );
+                        mVertexY[2] = 0;
+                    } // intersectsTop
+                    else // intersects a side of the bounding box
+                    {
+                        // &&& this hasn't been shown to work correctly yet...
+                        double pxlBBSideLen = mTriangle.lawOfSines( alpha 
+                                                                  , gamma
+                                                                  , baseLen 
+                                                                  );
+                        mVertexX[2] = ( useLwrRight
+                                      ? mWidth - 1
+                                      : 0
+                                      );
+                        mVertexY[2] = mHeight - (int)pxlBBSideLen;
+                    } // else !intersectsTop
+
                 } // else longest is A or B
 
             } // if all sides/angles known
