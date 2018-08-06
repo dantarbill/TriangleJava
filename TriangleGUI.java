@@ -813,10 +813,12 @@ public class TriangleGUI
                 } // for each side
                 
                 /*------------------------------------------------------------*
-                 &&&
-                 Note that there's a special case with an equilateral triangle
-                 where all the sides are equal, but it won't necessarily select
-                 the "base" (C) as the longest side.
+                &&&
+                Note that there's a special case with an equilateral triangle
+                where all the sides are equal, but it won't necessarily select
+                the "base" (C) as the longest side.
+                This tastes like a hack.  It may not be necessary now that the
+                rest of the solution is "complete".
                  *------------------------------------------------------------*/
                 if (  sideALen == sideBLen
                    && sideBLen == sideCLen
@@ -916,18 +918,14 @@ public class TriangleGUI
                      Given angles alpha and gamma and the side c (opposite the
                      angle gamma), returns the length of side a (opposite angle
                      alpha).
-                    &&& this doesn't currently factor in when !intersectsTop...
                      *--------------------------------------------------------*/
-                    double pxlSideLen = mTriangle.lawOfSines( beta 
-                                                            , gamma
+                    double pxlSideLen = mTriangle.lawOfSines( beta
+                                                            , ( intersectsTop
+                                                              ? gamma
+                                                              : alpha
+                                                              )
                                                             , baseLen 
                                                             );
-                    /*--------------------------------------------------------*
-                    Now that we have the length of the longest side in pixels,
-                    we also have what we need to get to position along the
-                    bounding box boundary where that line intersects, which
-                    gives us what we need to locate vertex/angle C...
-                    *---------------------------------------------------------*/
                     /*--------------------------------------------------------*
                      lenToPxlRatio is the ratio of longestSideLen to pxlSideLen.
                      It's what we use to scale lengths to pixles...
@@ -952,7 +950,7 @@ public class TriangleGUI
                     // Vertex for AngleB...
                     mVertexX[1] = ( useLwrRight
                                   ? mWidth  - 1
-                                  : mWidth  - (int)sideCPxlLen
+                                  : (int)sideCPxlLen
                                   );
                     mVertexY[1] = mHeight - 1;
 
@@ -980,14 +978,13 @@ public class TriangleGUI
                     } // intersectsTop
                     else // intersects a side of the bounding box
                     {
-                        // &&& this hasn't been shown to work correctly yet...
-                        double pxlBBSideLen = mTriangle.lawOfSines( alpha 
-                                                                  , gamma
+                        double pxlBBSideLen = mTriangle.lawOfSines( gamma 
+                                                                  , alpha
                                                                   , baseLen 
                                                                   );
                         mVertexX[2] = ( useLwrRight
-                                      ? mWidth - 1
-                                      : 0
+                                      ? 0
+                                      : mWidth - 1
                                       );
                         mVertexY[2] = mHeight - (int)pxlBBSideLen;
                     } // else !intersectsTop
@@ -1005,6 +1002,8 @@ public class TriangleGUI
                 mVertexY[1] = 0;
                 mVertexY[2] = mHeight - 1;
             } // else draw default
+            
+            // &&& Need a centering or rescaling routine here...
             
             repaint();
         } // calcVerticies
@@ -1032,16 +1031,18 @@ public class TriangleGUI
 
         public void paint(Graphics g) 
         {
-            boolean bDrawBoundingBox = false;
+            boolean bDrawBoundingBox = true;
             
             // The -1 bit is because a width of 10 is from 0..9...
             if ( bDrawBoundingBox )
             {
+                /*
                 g.drawLine( 0
                           , 0
                           , mWidth  - 1
                           , mHeight - 1
                           );
+                */
                 g.drawRect( 0
                           , 0
                           , mWidth  - 1
@@ -1049,12 +1050,14 @@ public class TriangleGUI
                           );
             } // if ( bDrawBoundingBox
             
+            g.setColor(Color.lightGray);
+            g.fillPolygon( mVertexX, mVertexY, 3);
+            g.setColor(Color.black);
             g.drawPolygon( mVertexX, mVertexY, 3);
             
         } // paint()
 
     } // class GraphicsPanel
-    
 
 } // class TriangleGUI
 
