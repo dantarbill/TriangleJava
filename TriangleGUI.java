@@ -78,6 +78,7 @@ public class TriangleGUI
     //  xPos
     //  yPos
     //  angle/side
+    // ...and set up as arrays for sides and angles
     JFormattedTextField mDataSideA   = null;
     JFormattedTextField mDataSideB   = null;
     JFormattedTextField mDataSideC   = null;
@@ -98,20 +99,6 @@ public class TriangleGUI
     final String STR_ANGLE_A = "Angle A";
     final String STR_ANGLE_B = "Angle B";
     final String STR_ANGLE_C = "Angle C";
-    
-    /*------------------------------------------------------------------------*
-     &&&
-     There must be a better way to do this.  Java doen't seem to want to let you
-     simply increment/decrement an enumerated type and use the result as an int
-     index...
-     *------------------------------------------------------------------------*/
-    final int    INDX_SID_A  = 0;
-    final int    INDX_SID_B  = 1;
-    final int    INDX_SID_C  = 2;
-
-    final int    INDX_ANG_A  = 0;
-    final int    INDX_ANG_B  = 1;
-    final int    INDX_ANG_C  = 2;
     
     /*========================================================================*
      Graphic Panel data...
@@ -274,7 +261,7 @@ public class TriangleGUI
                      , btmRowY
                      , fieldWidth
                      , fieldHeight
-                     , "Side C"
+                     , STR_SIDE_C
                      );
         
         dataPanel.add( mDataSideC  );
@@ -291,7 +278,7 @@ public class TriangleGUI
                      , btmRowY
                      , fieldWidth
                      , fieldHeight
-                     , "Angle B"
+                     , STR_ANGLE_B
                      );
         
         dataPanel.add( mDataAngleB  );
@@ -308,7 +295,7 @@ public class TriangleGUI
                      , midRowY
                      , fieldWidth
                      , fieldHeight
-                     , "Side A"
+                     , STR_SIDE_A
                      );
         
         dataPanel.add( mDataSideA  );
@@ -325,7 +312,7 @@ public class TriangleGUI
                      , topRowY
                      , fieldWidth
                      , fieldHeight
-                     , "Angle C"
+                     , STR_ANGLE_C
                      );
         
         dataPanel.add( mDataAngleC  );
@@ -342,7 +329,7 @@ public class TriangleGUI
                      , midRowY
                      , fieldWidth
                      , fieldHeight
-                     , "Side B"
+                     , STR_SIDE_B
                      );
         
         dataPanel.add( mDataSideB  );
@@ -584,16 +571,20 @@ public class TriangleGUI
             mCalcLabel.setText("Calc Requested");
     
             /*----------------------------------------------------------------*
-             Pull values from the UI fields...
-             *----------------------------------------------------------------*/
+            Pull values from the UI fields...
+            &&&
+            This needs to be done by a for loop for angles and sides.
+            That would mean that the mDataSide/AngleX stuff would have to also
+            be arrays.
+            *-----------------------------------------------------------------*/
             mTriangle.angles.set( TriangleData.DataID.DATA_A 
                                 , Double.parseDouble( mDataAngleA.getText() )
                                 );
             mTriangle.angles.set( TriangleData.DataID.DATA_B 
-                                , Double.parseDouble( mDataAngleA.getText() )
+                                , Double.parseDouble( mDataAngleB.getText() )
                                 );
             mTriangle.angles.set( TriangleData.DataID.DATA_C 
-                                , Double.parseDouble( mDataAngleA.getText() )
+                                , Double.parseDouble( mDataAngleC.getText() )
                                 );
             mTriangle.sides.set ( TriangleData.DataID.DATA_A 
                                 , Double.parseDouble( mDataSideA.getText() )
