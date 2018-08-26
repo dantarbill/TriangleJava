@@ -79,6 +79,9 @@ public class TriangleGUI
     //  yPos
     //  angle/side
     // ...and set up as arrays for sides and angles
+    protected DataField[] mSideField;
+    protected DataField[] mAngleField;
+    /*
     JFormattedTextField mDataSideA   = null;
     JFormattedTextField mDataSideB   = null;
     JFormattedTextField mDataSideC   = null;
@@ -92,7 +95,8 @@ public class TriangleGUI
     JLabel              mLabelAngleA = null;
     JLabel              mLabelAngleB = null;
     JLabel              mLabelAngleC = null;
-    
+    */
+    // &&& These can be generated in the constructor of DataField...
     final String STR_SIDE_A  = "Side A";
     final String STR_SIDE_B  = "Side B";
     final String STR_SIDE_C  = "Side C";
@@ -105,9 +109,13 @@ public class TriangleGUI
      *========================================================================*/
     private GraphicsPanel  mGraphicPanel  = null; // holds triangle graphic
     
-    /*========================================================================*
-     TriangleGUI() constructor
-     *=========================================================================*/
+    /**=======================================================================*
+     <p>
+     * TriangleGUI() constructor
+     * 
+     * @param aTriangle Triangle object that the UI is to operate on.
+     <p>
+     *========================================================================*/
     TriangleGUI
     ( Triangle aTriangle
     )
@@ -150,11 +158,16 @@ public class TriangleGUI
         setVisible(true); // display this frame
     } // TriangleGUI constructor
   
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
      createContentPane()
-    
-    
-     *=========================================================================*/
+     <p>
+     * Creates the pane that contains all the UI's content
+     * 
+     * @param (none)
+     * @return A JPanel with a base, Button and Data panel
+     <p>
+     *========================================================================*/
     private JPanel createContentPane()
     {
         JPanel basePanel  = new JPanel();
@@ -172,16 +185,173 @@ public class TriangleGUI
 
     } // createContentPane()
     
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
+     nested class DataField
+     <p>
+     Contains everything associated with a data input field.
+     <p>
+     * This is then used to create arrays of fields that can be interated through
+     * as opposed to individual explicitly referenced feild items.
+     <p>
+     * &&&
+     * Does this need to add a PropertyChangeListener?
+     <p>
+     *========================================================================*/
+    protected class DataField
+    {
+        //  dataField
+        public JFormattedTextField mTextField = null;
+        //  label
+        public JLabel              mLabel     = null;
+        //  angle/side        
+        public boolean             mIsAngle   = false;
+        
+         /**===================================================================*
+         <p>
+         DataField() constructor
+         <p>
+        * @param xPos   X position (relative to the host frame)
+        * @param yPos   Y position (relative to the host frame)
+        * @param width  field width
+        * @param height field height
+        * @param labelText Text to be displayed above the associated field
+        * 
+        * @return New JLabel object
+         <p>
+         *====================================================================*/
+        DataField
+        ( int     xPos
+        , int     yPos
+        , int     width
+        , int     height
+        , String  labelText
+        , boolean isAngle
+        )
+        {
+            mTextField = createDataField
+                ( xPos
+                , yPos
+                , width
+                , height
+                );
+            mLabel    = createDataLabel
+                ( xPos
+                , yPos
+                , width
+                , height
+                , labelText // get string from isAngle and index
+                );
+            mIsAngle   = isAngle;
+            
+        } // DataField() constructor
+
+        /**===================================================================*
+         <p>
+         createDataField()
+         <p>
+         Sets up a data field...
+         <p>
+         This takes the same parameters with the came VALUES as the associated
+         createDataLabel() call (except for the missing label text).
+         <p>
+         The label goes on TOP of the field, so the field height and yPos values
+         get fixed up here.
+
+         * @param xPos   X position (relative to the host frame)
+         * @param yPos   Y position (relative to the host frame)
+         * @param width  field width
+         * @param height field height
+         * 
+         * @return New JFormattedTextField object
+         <p>
+         *====================================================================*/
+        private JFormattedTextField createDataField
+        ( int    xPos
+        , int    yPos
+        , int    width
+        , int    height
+        )
+        {
+            JFormattedTextField field = new JFormattedTextField
+                ( new DefaultFormatterFactory
+                    ( new NumberFormatter(valueDisplayFormat)
+                    , new NumberFormatter(valueDisplayFormat)
+                    , new NumberFormatter(valueEditFormat)
+                    )
+                );
+
+            field.setValue( new Double( 0.0 ) );
+            field.setHorizontalAlignment(JTextField.TRAILING);
+            field.setEditable(true);
+
+            field.setSize( width
+                         , height
+                         );
+            field.setLocation( xPos
+                             , yPos + height
+                             );
+            return field;
+
+        } // createDataField()
+
+        /**===================================================================*
+         <p>
+         createDataLabel()
+         <p>
+         Sets up a data label...
+         <p>
+         This takes the same parameters with the came VALUES as the associated
+         createDataField() call.
+         <p>
+         The label goes on TOP of the field, so the height and yPos values get
+         fixed up in the createDataField() call.
+
+         * @param xPos   X position (relative to the host frame)
+         * @param yPos   Y position (relative to the host frame)
+         * @param width  field width
+         * @param height field height
+         * @param labelText Text to be displayed above the associated field
+         * 
+         * @return New JLabel object
+         <p>
+         *====================================================================*/
+        private JLabel createDataLabel
+        ( int    xPos
+        , int    yPos
+        , int    width
+        , int    height
+        , String labelText
+        )
+        {
+            JLabel label = new JLabel(labelText);
+
+            label.setSize( width
+                         , height
+                         );
+            label.setLocation( xPos
+                             , yPos
+                             );
+            return label;
+
+        } // createDataLabel()
+        
+    } // class DataField
+    
+    /**=======================================================================*
+     <p>
      createDataPanel()
-    
+     <p>
      Sets up the data fields...
-    
+     <p>
      Since this takes up all the vertical space that the button panel *doesn't*
      take, we need to create the button panel *first* in order to get the value
      of mButtonPanelHeight
-    
-     *=========================================================================*/
+
+     * @param (none)
+     * @return A JPanel containing the data fields and a graphic overlay
+     <p>
+     *========================================================================*/
     private JPanel createDataPanel()
     {
         // &&& needs to be in resize()
@@ -190,6 +360,7 @@ public class TriangleGUI
         
         final int fieldWidth  = 70;
         final int fieldHeight = 30;
+        
         final int topPadding  = 10;
         final int btmPadding  = topPadding;
         final int sidePadding = 20;
@@ -229,111 +400,73 @@ public class TriangleGUI
             AngleA           SideC             AngleB
          Create fields in the counter clockwise direction starting at AngleA...
          *--------------------------------------------------------------------*/
-        mDataAngleA = createDataField
-                     ( lftX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelAngleA = createDataLabel
+        mAngleField[0] = new DataField
                      ( lftX
                      , btmRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_ANGLE_A
+                     , true // is angle
                      );
         /*
         mDataAngleA.addPropertyChangeListener( STR_ANGLE_A
                                              , new FormattedTextFieldListener()
                                              );
         */
-        dataPanel.add( mDataAngleA  );
-        dataPanel.add( mLabelAngleA );
-       
-        mDataSideC = createDataField
-                     ( midX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelSideC = createDataLabel
+
+        mSideField[0] = new DataField
                      ( midX
                      , btmRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_SIDE_C
+                     , false // is not angle
                      );
         
-        dataPanel.add( mDataSideC  );
-        dataPanel.add( mLabelSideC );
-       
-        mDataAngleB = createDataField
-                     ( rgtX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelAngleB = createDataLabel
+        mAngleField[1] = new DataField
                      ( rgtX
                      , btmRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_ANGLE_B
+                     , true
                      );
         
-        dataPanel.add( mDataAngleB  );
-        dataPanel.add( mLabelAngleB );
-       
-        mDataSideA = createDataField
-                     ( midRgtX
-                     , midRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelSideA = createDataLabel
+        mSideField[1] = new DataField
                      ( midRgtX
                      , midRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_SIDE_A
+                     , false
                      );
         
-        dataPanel.add( mDataSideA  );
-        dataPanel.add( mLabelSideA );
-       
-        mDataAngleC = createDataField
-                     ( midX
-                     , topRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelAngleC = createDataLabel
+        mAngleField[2] = new DataField
                      ( midX
                      , topRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_ANGLE_C
+                     , true
                      );
         
-        dataPanel.add( mDataAngleC  );
-        dataPanel.add( mLabelAngleC );
-       
-        mDataSideB = createDataField
-                     ( midLftX
-                     , midRowY
-                     , fieldWidth
-                     , fieldHeight
-                     );
-        mLabelSideB = createDataLabel
+        mSideField[2] = new DataField
                      ( midLftX
                      , midRowY
                      , fieldWidth
                      , fieldHeight
                      , STR_SIDE_B
+                     , false
                      );
         
-        dataPanel.add( mDataSideB  );
-        dataPanel.add( mLabelSideB );
+        for ( int i=0; i < mAngleField.length ; i++ )
+        {
+            dataPanel.add( mAngleField[i].mTextField );
+            dataPanel.add( mAngleField[i].mLabel     );
+            // Assumption that we have the same number of angles and sides
+            dataPanel.add( mSideField [i].mTextField );
+            dataPanel.add( mSideField [i].mLabel     );
+        } // for each field add it to the panel
         
         mGraphicPanel = new GraphicsPanel();
         mGraphicPanel.setLayout(null);
@@ -357,88 +490,13 @@ public class TriangleGUI
         
     } // createDataPanel()
     
-    /*========================================================================*
-     createDataField()
-    
-     Sets up a data field...
-     
-     This takes the same parameters with the came VALUES as the associated
-     createDataLabel() call (except for the missing label text).
-     
-     The label goes on TOP of the field, so the field height and yPos values get
-     fixed up here.
-    
-     *=========================================================================*/
-    private JFormattedTextField createDataField
-    ( int    xPos
-    , int    yPos
-    , int    width
-    , int    height
-    )
-    {
-        JFormattedTextField field = new JFormattedTextField
-            ( new DefaultFormatterFactory
-                ( new NumberFormatter(valueDisplayFormat)
-                , new NumberFormatter(valueDisplayFormat)
-                , new NumberFormatter(valueEditFormat)
-                )
-            );
-        
-        field.setValue( new Double( 0.0 ) );
-        field.setHorizontalAlignment(JTextField.TRAILING);
-        field.setEditable(true);
-
-        field.setSize( width
-                     , height
-                     );
-        field.setLocation( xPos
-                         , yPos + height
-                         );
-        
-        return field;
-        
-    } // createDataField()
-
-  
-    /*========================================================================*
-     createDataLabel()
-    
-     Sets up a data label...
-     
-     This takes the same parameters with the came VALUES as the associated
-     createDataField() call.
-     
-     The label goes on TOP of the field, so the height and yPos values get fixed
-     up in the createDataField() call.
-    
-     *=========================================================================*/
-    private JLabel createDataLabel
-    ( int    xPos
-    , int    yPos
-    , int    width
-    , int    height
-    , String labelText
-    )
-    {
-        JLabel label = new JLabel(labelText);
-        
-        label.setSize( width
-                     , height
-                     );
-        label.setLocation( xPos
-                         , yPos
-                         );
-        
-        return label;
-        
-    } // createDataLabel()
-  
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
      createButtonPanel()
-    
+     <p>
      Sets up button panel...
-    
-     *=========================================================================*/
+     <p>
+     *========================================================================*/
     private JPanel createButtonPanel()
     {
         final int vertPad           = 10; // above and below buttons
@@ -516,8 +574,13 @@ public class TriangleGUI
         
     } // createButtonPanel()
     
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
      setUpFormats()
+     <p>
+     * This is supposed to deal with stupid amounts of digits after the decimal
+     * place in displayed doubles.
+    <p>
      *========================================================================*/
     private void setUpFormats()
     {
@@ -542,11 +605,21 @@ public class TriangleGUI
         
     } // setUpFormats()
     
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
      roundDouble()
-     
+     <p>
      The intent here is to round the result to sidestep floating point inaccuracy
      beyond the 13th decimal place.
+     * <p>
+     * In actual operation, it was used as a hack to keep fields from displaying
+     * stupid numbers of digits past the decimal place.  setUpFormats() was
+     * supposed to mitigate that, but it isn't yet working in all cases.
+     * Note that currently, it's just acting as a pass through.
+     <p>
+     * @param aDouble the value to be rounded
+     * @return the rounded value
+     * @see ROUND_FACTOR
      *========================================================================*/
     private double roundDouble
     ( double aDouble
@@ -557,8 +630,10 @@ public class TriangleGUI
         
     } // roundDouble
   
-    /*========================================================================*
+    /**=======================================================================*
+     <p>
      actionPerformed()
+     <p>
      *========================================================================*/
     public void actionPerformed
     ( ActionEvent event
@@ -572,29 +647,23 @@ public class TriangleGUI
     
             /*----------------------------------------------------------------*
             Pull values from the UI fields...
-            &&&
-            This needs to be done by a for loop for angles and sides.
-            That would mean that the mDataSide/AngleX stuff would have to also
-            be arrays.
             *-----------------------------------------------------------------*/
-            mTriangle.angles.set( TriangleData.DataID.DATA_A 
-                                , Double.parseDouble( mDataAngleA.getText() )
-                                );
-            mTriangle.angles.set( TriangleData.DataID.DATA_B 
-                                , Double.parseDouble( mDataAngleB.getText() )
-                                );
-            mTriangle.angles.set( TriangleData.DataID.DATA_C 
-                                , Double.parseDouble( mDataAngleC.getText() )
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_A 
-                                , Double.parseDouble( mDataSideA.getText() )
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_B 
-                                , Double.parseDouble( mDataSideB.getText() )
-                                );
-            mTriangle.sides.set ( TriangleData.DataID.DATA_C 
-                                , Double.parseDouble( mDataSideC.getText() )
-                                );
+            for ( TriangleData.DataID dID: TriangleData.DataID.values() )
+            {
+                if ( dID != TriangleData.DataID.DATA_INVALID )
+                {			
+                    mTriangle.angles.set( dID 
+                                        , Double.parseDouble
+                                          ( mAngleField[dID.ordinal()].mTextField.getText() 
+                                          )
+                                        );
+                    mTriangle.sides.set ( dID 
+                                        , Double.parseDouble
+                                          ( mAngleField[dID.ordinal()].mTextField.getText() 
+                                          )
+                                        );
+                } // if not invalid
+            } // for each angle & side
     
             /*----------------------------------------------------------------*
              Get the solution...
@@ -606,48 +675,27 @@ public class TriangleGUI
              *----------------------------------------------------------------*/
             if ( success )
             {
-                mDataAngleA.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.angles.get( TriangleData.DataID.DATA_A )
+                for ( TriangleData.DataID dID: TriangleData.DataID.values() )
+                {
+                    if ( dID != TriangleData.DataID.DATA_INVALID )
+                    {			
+                        mAngleField[dID.ordinal()].mTextField.setText
+                        ( String.valueOf
+                            ( roundDouble
+                                ( mTriangle.angles.get( dID )
+                                )
                             )
-                        )
-                    );
-                mDataAngleB.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.angles.get( TriangleData.DataID.DATA_B )
+                        );
+                        
+                        mSideField[dID.ordinal()].mTextField.setText
+                        ( String.valueOf
+                            ( roundDouble
+                                ( mTriangle.sides.get( dID )
+                                )
                             )
-                        )
-                    );
-                mDataAngleC.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.angles.get( TriangleData.DataID.DATA_C )
-                            )
-                        )
-                    );
-                mDataSideA.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.sides.get( TriangleData.DataID.DATA_A )
-                            )
-                        )
-                    );
-                mDataSideB.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.sides.get( TriangleData.DataID.DATA_B )
-                            )
-                        )
-                    );
-                mDataSideC.setText
-                    ( String.valueOf
-                        ( roundDouble
-                            ( mTriangle.sides.get( TriangleData.DataID.DATA_C )
-                            )
-                        )
-                    );
+                        );
+                    } // if not invalid
+                } // for each angle & side
                 
                 mGraphicPanel.calcVerticies();
               
@@ -668,13 +716,20 @@ public class TriangleGUI
             mResetLabel.setText("Reset");
 
             // Reset all data fields to zero
-            mDataSideA.setValue ( new Double( 0.0 ) ); 
-            mDataSideB.setValue ( new Double( 0.0 ) ); 
-            mDataSideC.setValue ( new Double( 0.0 ) ); 
-            mDataAngleA.setValue( new Double( 0.0 ) );
-            mDataAngleB.setValue( new Double( 0.0 ) );
-            mDataAngleC.setValue( new Double( 0.0 ) );
-            
+            for ( TriangleData.DataID dID: TriangleData.DataID.values() )
+            {
+                if ( dID != TriangleData.DataID.DATA_INVALID )
+                {			
+                    mAngleField[dID.ordinal()].mTextField.setValue
+                    ( new Double( 0.0 )
+                    );
+
+                    mSideField [dID.ordinal()].mTextField.setValue
+                    ( new Double( 0.0 )
+                    );
+                } // if not invalid
+            } // for each angle & side
+
             mTriangle.setAll( 0.0
                             , 0.0
                             , 0.0
@@ -704,13 +759,14 @@ public class TriangleGUI
     } // class FormattedTextFieldListener
     */
 
-    /*========================================================================*
-     class GraphicsPanel
-    
+    /**=======================================================================*
+     <p>
+     nested class GraphicsPanel
+     <p>
      Panel that hosts the triagnle graphic embedded in the dataPanel (mDataPanel).
-     
-     We needed a subclass where we could override paint() and get stuff painted.
-    
+     <p>
+     We needed a subclass where we could override paint() and get stuff painted.   
+     <p>
      *========================================================================*/
     protected class GraphicsPanel
         extends  JPanel
@@ -726,8 +782,8 @@ public class TriangleGUI
         Since drawPolygon() wants separate x and y arrays, rather than arrays of
         points, we'll have to set up our verticies the same way...
          *--------------------------------------------------------------------*/
-        private int[] mVertexX = { 0, 0, 0};
-        private int[] mVertexY = { 0, 0, 0}; 
+        private int[] mVertexX = { 0, 0, 0 };
+        private int[] mVertexY = { 0, 0, 0 }; 
 
         /*--------------------------------------------------------------------*
          The bounding box diagonal angle is used to determine whether a side
@@ -736,20 +792,26 @@ public class TriangleGUI
          *--------------------------------------------------------------------*/
         private double mBBDiagAngle = 0.0;
 
-        /*====================================================================*
+        /**===================================================================*
+         <p>
          GraphicsPanel() constructor
+         <p>
+         * Just a pass through to the JPanel superclass constructor
+         <p>
          *====================================================================*/
         GraphicsPanel()
         {
             super();
         } // GraphicsPanel() constructor
         
-        /*====================================================================*
-         calcVerticies()
-        
+        /**===================================================================*
+         <p>
+         * calcVerticies()
+         <p>
          Calculates the pixel positions of the verticies of the triangle data
          currently in mTriangle, scaled to fit in the bounding box of the
          graphics panel...
+         <p>
          *====================================================================*/
         public void calcVerticies()
         {
