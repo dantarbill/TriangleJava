@@ -557,7 +557,7 @@ public class TriangleGUI
      <p>
      * This is supposed to deal with stupid amounts of digits after the decimal
      * place in displayed doubles.
-    <p>
+     <p>
      *========================================================================*/
     private void setUpFormats()
     {

@@ -63,18 +63,17 @@ public class Triangle
         
         TriangleGUI triGUI = new TriangleGUI( triObj );
         
+        /*--------------------------------------------------------------------*
+        Everything from here to the end of main() is test code.  It's probably
+        still useful since it's apparent that there are still logic errors that
+        need to be uncovered by an automated data set that covers all possible
+        realistic and erroneous data combinations that excersizes all paths
+        through the code.  It would probably make sense to not even instantiate
+        the TriangleGUI object since it would only get in the way...oh...except
+        for rendering the results.
+         *--------------------------------------------------------------------*/
         if (triObj.useFindSolution)
         {
-            /*
-            JSONObject data = new JSONObject
-                { "angleA":[  0.0,  0.0,  0.0, 37.0 ]
-                , "sideC" :[ 51.0,  0.0, 51.0,  0.0 ]
-                , "angleB":[  0.0, 52.0, 54.0, 54.0 ]
-                , "sideA" :[ 31.0, 30.0, 31.0, 31.0 ]
-                , "angleC":[  0.0, 87.0,  0.0,  0.0 ]
-                , "sideB" :[ 41.0,  0.0,  0.0,  0.0 ]                    
-                };
-            */
             /*----------------------------------------------------------------*
              &&&
              I guess I need something to either read the angle and side
@@ -289,7 +288,7 @@ public class Triangle
         // At this point, we know we have 1..3 angles and 1..2 sides
         // First check 2 angle solutions
         if ( !success
-           && knownAngles == 2 
+           && knownAngles > 1 
            )
         {
             sideID = findDataASA();
@@ -381,16 +380,17 @@ public class Triangle
 /*============================================================================*
     TRIG FUNCTIONS...
  *============================================================================*/
-    /*========================================================================*
+    /**=======================================================================*
+     * <p>
      lawOfCosines
-    
-     Description:
+     * <p>    
         Given sides a, b and c, calculate the angle of alpha (A), which is the
         angle opposite side a.
-
-     Returns:
-        Angle in degress.
-
+     * @param a Side A length
+     * @param b Side B length
+     * @param c Side C length
+     * @return Angle in degrees.
+     * <p>
      *========================================================================*/
     public double lawOfCosines
     ( double a
@@ -415,19 +415,19 @@ public class Triangle
        
     } // lawOfCosines()
 
-    /*========================================================================*
+    /**=======================================================================*
+     * <p>
      lawOfSines
-    
-     Description:
+     * <p>
         Given angles alpha and gamma and the side c (opposite the angle gamma),
         returns the length of side a (opposite angle alpha).
-
-     Returns:
-        Length of side a.
-     
-    Note:
-        If any input parameter is 0.0, the result will be 0.0.
-
+     * <p>
+     * If any input parameter is 0.0, the result will be 0.0.
+     * @param alpha Angle alpha (degrees)
+     * @param gamma Angle gamma (degrees)
+     * @param c Side C length
+     * @return Length of side a.
+     * <p>
      *========================================================================*/
     public double lawOfSines
     ( double alpha
