@@ -792,7 +792,7 @@ public class TriangleGUI
          *====================================================================*/
         public void calcVerticies()
         {
-            // If all the sides and angles are known, we get vericies for the
+            // If all the sides and angles are known, we get verticies for the
             // resulting triangle...
             if (  mTriangle.sides.getKnownCount () == 3
                && mTriangle.angles.getKnownCount() == 3
@@ -897,8 +897,8 @@ public class TriangleGUI
                     mVertexX[1] = mWidth  - 1; 
                     mVertexY[1] = mHeight - 1;
 
-                    mVertexX[2] = (int)sideAPxlLen; 
-                    mVertexY[2] = mHeight - (int)sideCPxlLen;
+                    mVertexX[2] = (int)sideCPxlLen; 
+                    mVertexY[2] = mHeight - (int)sideAPxlLen;
                     
                 } // if side C is longest
                 else 
