@@ -1,14 +1,10 @@
 /*============================================================================*
  TriangleGUI.java
  
- Some sort of GUI to enter and display triangle data.
- At some point it should include a graphic representation of a default inital
- triangle and the resulting triangle scaled to fit the space of the initial
- default.
-
-
+ A GUI to enter and display triangle data.
+ It includse a graphic representation of a default inital triangle and the 
+ resulting triangle scaled to fit the space of the initial default.
  *============================================================================*/
-
 
 import java.lang.*;
 import java.awt.*;
@@ -19,12 +15,16 @@ import java.awt.Graphics;
 import javax.swing.*;
 import javax.swing.text.*;
 
-/*========================================================================*
+/**===========================================================================*
+ * <p>
  TriangleGUI class
- *========================================================================*/
+ * <p>
+ * This probably turned into a kitchen sink.
+ * It 
+ *============================================================================*/
 public class TriangleGUI 
     extends    JFrame 
-    implements ActionListener
+    implements ActionListener, ComponentListener
 {
     ////////////////////////////////////////////////////////////////////////////
     // Member variables...
@@ -70,8 +70,9 @@ public class TriangleGUI
      *========================================================================*/
     protected Triangle    mTriangle   = null;
     
-    protected JPanel      mDataPanel  = null; // holds data input fields
+    protected DataPanel   mDataPanel  = null; // holds data input fields
 
+    // &&& Probably needs to be member data of DataPanel...
     protected DataField[] mSideField  = new DataField[3];
     protected DataField[] mAngleField = new DataField[3];
     
@@ -110,6 +111,7 @@ public class TriangleGUI
         mTriangle = aTriangle;
         
         setUpFormats();
+
         // &&& this may change when we get resize() working...
         setBounds( frameX
                  , frameY
@@ -118,6 +120,8 @@ public class TriangleGUI
                  );
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Container con = this.getContentPane(); // inherit main frame
+        
+        con.addComponentListener(this);
         
         mBasePanel = createContentPane();
 
@@ -128,7 +132,46 @@ public class TriangleGUI
         // buttonPanel.setVisible(true);
         setVisible(true); // display this frame
     } // TriangleGUI constructor
-  
+
+    /*========================================================================*
+    Since ComponentListener is an abstract class, we need to implement some
+    methods to keep it happy...
+     *========================================================================*/
+    public void componentHidden(ComponentEvent ce) {};
+    public void componentShown (ComponentEvent ce) {};
+    public void componentMoved (ComponentEvent ce) {};
+ 
+    /**=======================================================================*
+     <p>
+     componentResized()
+     <p>
+     * When the UI window is resized we reset the frame height and width that
+     * all the other elements have been located in reference to.
+     * 
+     * @param ce The ComponentEvent
+     <p>
+     *========================================================================*/
+    public void componentResized(ComponentEvent ce)
+    {
+        mFrameHeight = this.getHeight();
+        mFrameWidth  = this.getWidth();
+        mDataPanel.calcLocations();
+
+        /*--------------------------------------------------------------------*
+        &&&
+        Other stuff that will have to be recalculated when the resize event
+        occurs...
+        
+        createDataPanel()   mDataPanel
+           Note that all the data field positions will have to adjust too.
+        createButtonPanel() mButtonPanel
+        GraphicsPanel()     mGraphicPanel 
+         *--------------------------------------------------------------------*/
+
+        
+
+    } // componentResized()
+
     /**=======================================================================*
      <p>
      createContentPane()
@@ -143,11 +186,11 @@ public class TriangleGUI
     {
         JPanel basePanel  = new JPanel();
         basePanel.setLayout(null);
-        
+            
         mButtonPanel = createButtonPanel();
         basePanel.add(mButtonPanel);
 
-        mDataPanel   = createDataPanel();
+        mDataPanel   = new DataPanel();
         basePanel.add(mDataPanel);
 
         basePanel.setOpaque(true);
@@ -191,7 +234,7 @@ public class TriangleGUI
         * @param index   Array index of this object in mSide/AngleField array
         * @param isAngle true if this is an angle false if this is a side
         * 
-        * @return New JLabel object
+        * @return New DataField object
          <p>
          *====================================================================*/
         DataField
@@ -313,160 +356,265 @@ public class TriangleGUI
 
         } // createDataLabel()
         
+        /**===================================================================*
+         <p>
+         setLocation()
+         <p>
+         Sets the location of the label and text field relative to the host frame.
+         <p>
+         * @param xPos   X position (relative to the host frame)
+         * @param yPos   Y position (relative to the host frame)
+         * 
+         <p>
+         *====================================================================*/
+        private void setLocation
+        ( int    xPos
+        , int    yPos
+        )
+        {
+            mTextField.setLocation(xPos, yPos);
+            mLabel    .setLocation(xPos, yPos);
+        } // setLocation()
+        
     } // class DataField
     
     /**=======================================================================*
      <p>
-     createDataPanel()
+     nested class DataPanel
      <p>
-     Sets up the data fields...
-     <p>
-     Since this takes up all the vertical space that the button panel *doesn't*
-     take, we need to create the button panel *first* in order to get the value
-     of mButtonPanelHeight
-
-     * @param (none)
-     * @return A JPanel containing the data fields and a graphic overlay
+     Contains all the position information necessary to set and resize the data
+     * panel.  Includes calcLocations() to calc/recalc the size and position of
+     * the contained components.
      <p>
      *========================================================================*/
-    private JPanel createDataPanel()
+    protected class DataPanel
+        extends JPanel
     {
-        // &&& needs to be in resize()
-        int dataPanelWidth  = mFrameWidth;
-        int dataPanelHeight = mFrameHeight - mButtonPanelHeight;
+        int mDataPanelWidth  = 0;
+        int mDataPanelHeight = 0;
         
-        final int fieldWidth  = 70;
-        final int fieldHeight = 30;
+        final int mFieldWidth  = 70;
+        final int mFieldHeight = 30;
         
-        final int topPadding  = 10;
-        final int btmPadding  = topPadding;
-        final int sidePadding = 20;
-        final int topRowY     = topPadding;
-        final int midRowY     =  ( ( dataPanelHeight - topPadding - btmPadding ) / 2 )
-                                 - fieldHeight + topPadding;
-        final int btmRowY     = dataPanelHeight - (2 * fieldHeight) - btmPadding;
+        final int mTopPadding  = 10;
+        final int mBtmPadding  = mTopPadding;
+        final int mSidePadding = 20;
+        final int mTopRowY     = mTopPadding;
         
-        final int lftX        = sidePadding;
-        final int midLftX     = ( dataPanelWidth / 4 )
-                              - ( fieldWidth     / 2 );
-        final int midX        = ( dataPanelWidth / 2 )
-                              - ( fieldWidth     / 2 );
-        final int midRgtX     = ( ( dataPanelWidth / 4 ) * 3 )
-                              - ( fieldWidth     / 2 );
-        final int rgtX        = ( dataPanelWidth - fieldWidth - sidePadding );
+        int mMidRowY    = 0;
+        int mBtmRowY    = 0;
+        int mLftX       = 0;
+        int mMidLftX    = 0;
+        int mMidX       = 0;
+        int mMidRgtX    = 0;
+        int mRgtX       = 0;
         
-        JPanel dataPanel  = new JPanel();
-        
-        ////////////////////////////////////////////////////////////////////////
-        // Create the panel to put the data fields on...
-        ////////////////////////////////////////////////////////////////////////
-        dataPanel.setLayout(null);
-        dataPanel.setLocation( 0
-                             , 0
-                             );
-        dataPanel.setSize( dataPanelWidth
-                         , dataPanelHeight
-                         );
-        
-        ////////////////////////////////////////////////////////////////////////
-        // Create data fields...
-        ////////////////////////////////////////////////////////////////////////
-        /*--------------------------------------------------------------------*
-                             AngleC
-                    SideB              SideA
-            AngleA           SideC             AngleB
-         Create fields in the counter clockwise direction starting at AngleA...
-         *--------------------------------------------------------------------*/
-        mAngleField[0] = new DataField
-                     ( lftX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 0
-                     , true // is angle
-                     );
-        /*
-        mDataAngleA.addPropertyChangeListener( STR_ANGLE_A
-                                             , new FormattedTextFieldListener()
-                                             );
-        */
+        /**===================================================================*
+        <p>
+        DataPanel() constructor
+        <p>
+        Sets up the data fields...
+        <p>
+        Since this takes up all the vertical space that the button panel *doesn't*
+        take, we need to create the button panel *first* in order to get the value
+        of mButtonPanelHeight
 
-        mSideField[2] = new DataField
-                     ( midX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 2
-                     , false // is not angle
-                     );
-        
-        mAngleField[1] = new DataField
-                     ( rgtX
-                     , btmRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 1
-                     , true
-                     );
-        
-        mSideField[0] = new DataField
-                     ( midRgtX
-                     , midRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 0
-                     , false
-                     );
-        
-        mAngleField[2] = new DataField
-                     ( midX
-                     , topRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 2
-                     , true
-                     );
-        
-        mSideField[1] = new DataField
-                     ( midLftX
-                     , midRowY
-                     , fieldWidth
-                     , fieldHeight
-                     , 1
-                     , false
-                     );
-        
-        for ( int i=0; i < mAngleField.length ; i++ )
+        * @param (none)
+        * @return A DataPanel containing the data fields and a graphic overlay
+         <p>
+         *====================================================================*/
+        DataPanel()
         {
-            dataPanel.add( mAngleField[i].mTextField );
-            dataPanel.add( mAngleField[i].mLabel     );
-            // Assumption that we have the same number of angles and sides
-            dataPanel.add( mSideField [i].mTextField );
-            dataPanel.add( mSideField [i].mLabel     );
-        } // for each field add it to the panel
+            super();
+
+            ////////////////////////////////////////////////////////////////////
+            // Set up the panel to put the data fields on...
+            ////////////////////////////////////////////////////////////////////
+            setLayout(null);
+            setLocation( 0
+                       , 0
+                       );
+
+            ////////////////////////////////////////////////////////////////////
+            // Create data fields...
+            ////////////////////////////////////////////////////////////////////
+            /*----------------------------------------------------------------*
+                                 AngleC
+                        SideB              SideA
+                AngleA           SideC             AngleB
+             Create fields in the counter clockwise direction starting at AngleA...
+             *----------------------------------------------------------------*/
+            mAngleField[0] = new DataField
+                         ( mLftX
+                         , mBtmRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 0
+                         , true // is angle
+                         );
+            /*
+            mDataAngleA.addPropertyChangeListener( STR_ANGLE_A
+                                                 , new FormattedTextFieldListener()
+                                                 );
+            */
+
+            mSideField[2] = new DataField
+                         ( mMidX
+                         , mBtmRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 2
+                         , false // is not angle
+                         );
+
+            mAngleField[1] = new DataField
+                         ( mRgtX
+                         , mBtmRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 1
+                         , true
+                         );
+
+            mSideField[0] = new DataField
+                         ( mMidRgtX
+                         , mMidRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 0
+                         , false
+                         );
+
+            mAngleField[2] = new DataField
+                         ( mMidX
+                         , mTopRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 2
+                         , true
+                         );
+
+            mSideField[1] = new DataField
+                         ( mMidLftX
+                         , mMidRowY
+                         , mFieldWidth
+                         , mFieldHeight
+                         , 1
+                         , false
+                         );
+
+            for ( int i=0; i < mAngleField.length ; i++ )
+            {
+                add( mAngleField[i].mTextField );
+                add( mAngleField[i].mLabel     );
+                // Assumption that we have the same number of angles and sides
+                add( mSideField [i].mTextField );
+                add( mSideField [i].mLabel     );
+            } // for each field add it to the panel
+            
+            mGraphicPanel = new GraphicsPanel();
+            mGraphicPanel.setLayout(null);
+            mGraphicPanel.setOpaque(false);
+
+            calcLocations();
+
+            setSize( mDataPanelWidth
+                   , mDataPanelHeight
+                   );
+
+            add( mGraphicPanel );
+
+        } // DataPanel() constructor
+
+        /**===================================================================*
+         <p>
+         calcLocations()
+         <p>
+         * Calculates the locations of all the UI elements on the DataPanel.
+         * Refers to the following variables which need to be calculated first...
+         <p>
+         * mFrameWidth
+         <p>
+         * mFrameHeight
+         <p>
+         * mButtonPanelHeight
+         <p>
+         * Note that this sets the positions of all the DataField objects and
+         * the mGraphicsPanel so, it needs to be called AFTER they are constructed.
+         *====================================================================*/
+        protected void calcLocations()
+        {
+            mDataPanelWidth  = mFrameWidth;
+            mDataPanelHeight = mFrameHeight - mButtonPanelHeight;
         
-        mGraphicPanel = new GraphicsPanel();
-        mGraphicPanel.setLayout(null);
-        mGraphicPanel.setLocation( fieldWidth + sidePadding
-                                 , topPadding + (2 * fieldHeight)
+            mMidRowY    = ( ( mDataPanelHeight - mTopPadding - mBtmPadding ) / 2 )
+                          - mFieldHeight + mTopPadding;
+            mBtmRowY    = mDataPanelHeight - (2 * mFieldHeight) - mBtmPadding;
+
+            mLftX       = mSidePadding;
+            mMidLftX    = ( mDataPanelWidth / 4 )
+                        - ( mFieldWidth     / 2 );
+            mMidX       = ( mDataPanelWidth / 2 )
+                        - ( mFieldWidth     / 2 );
+            mMidRgtX    = ( ( mDataPanelWidth / 4 ) * 3 )
+                        - ( mFieldWidth     / 2 );
+            mRgtX       = ( mDataPanelWidth - mFieldWidth - mSidePadding );
+        
+            ////////////////////////////////////////////////////////////////////
+            // Position data fields...
+            ////////////////////////////////////////////////////////////////////
+            /*----------------------------------------------------------------*
+                                 AngleC
+                        SideB              SideA
+                AngleA           SideC             AngleB
+             Create fields in the counter clockwise direction starting at AngleA...
+             *----------------------------------------------------------------*/
+            mAngleField[0].setLocation
+                         ( mLftX
+                         , mBtmRowY
+                         );
+
+            mSideField[2].setLocation
+                         ( mMidX
+                         , mBtmRowY
+                         );
+
+            mAngleField[1].setLocation
+                         ( mRgtX
+                         , mBtmRowY
+                         );
+
+            mSideField[0].setLocation
+                         ( mMidRgtX
+                         , mMidRowY
+                         );
+
+            mAngleField[2].setLocation
+                         ( mMidX
+                         , mTopRowY
+                         );
+
+            mSideField[1].setLocation
+                         ( mMidLftX
+                         , mMidRowY
+                         );
+
+            mGraphicPanel.setLocation( mFieldWidth + mSidePadding
+                                     , mTopPadding + (2 * mFieldHeight)
+                                     );
+            mGraphicPanel.setSize( mDataPanelWidth
+                                 - (( mFieldWidth + mSidePadding ) * 2 )
+                                 , mDataPanelHeight
+                                 - (4 * mFieldHeight)
+                                 - mTopPadding
+                                 - mBtmPadding
                                  );
-        mGraphicPanel.setSize( dataPanelWidth
-                             - (( fieldWidth + sidePadding ) * 2 )
-                             , dataPanelHeight
-                             - (4 * fieldHeight)
-                             - topPadding
-                             - btmPadding
-                             );
-        mGraphicPanel.setOpaque(false);
+            mGraphicPanel.calcSize();
+
+        } // calcLocations() 
         
-        dataPanel.add( mGraphicPanel );
-        
-        mGraphicPanel.resize();
-       
-        return dataPanel;
-        
-    } // createDataPanel()
-    
+    } // class DataPanel
+
     /**=======================================================================*
      <p>
      createButtonPanel()
@@ -511,7 +659,7 @@ public class TriangleGUI
         mCalcButton.setSize( buttonWidth
                            , buttonHeight  
                            );
-        // &&& needs to be in resize()
+        // &&& needs to be in calcLocations()
         int calcButtonX = ( buttonPanelWidth 
                           - ( ( buttonWidth * buttonCount )     // buttons width
                             + ( ( buttonCount - 1 ) * horzPad ) // padding width
@@ -537,7 +685,7 @@ public class TriangleGUI
         mResetButton.setSize( buttonWidth
                             , buttonHeight  
                             );
-        // &&& needs to be in resize()
+        // &&& needs to be in calcLocations()
         mResetButton.setLocation( calcButtonX + buttonWidth + horzPad // reset to right of calc
                                 , vertPad / 2 
                                 );
@@ -746,7 +894,7 @@ public class TriangleGUI
      <p>
      *========================================================================*/
     protected class GraphicsPanel
-        extends  JPanel
+        extends JPanel
     {
         /*--------------------------------------------------------------------*
         The width and height of the bounding box, which is the same as the
@@ -1038,8 +1186,19 @@ public class TriangleGUI
             repaint();
         } // calcVerticies
         
-        public void resize()
+        /**===================================================================*
+         <p>
+         * calcSize()
+         <p>
+         When the size of the graphics panel changes, we need to recalculate
+         * mBBDiagAngle to account for the change in aspect ratio AND call
+         * calcVerticies() to rescale the triangle image.
+         * <p>
+         *====================================================================*/
+        public void calcSize()
         {
+            // &&& This doesn't really resize yet because the size of the frame
+            // hasn't been updated...
             Dimension size = getSize();
             mWidth  = size.width;
             mHeight = size.height;
@@ -1057,11 +1216,11 @@ public class TriangleGUI
             mBBDiagAngle = mTriangle.lawOfCosines( a, b, c );
             calcVerticies();
             
-        } // resize()
+        } // calcSize()
 
         public void paint(Graphics g) 
         {
-            boolean bDrawBoundingBox = true;
+            boolean bDrawBoundingBox = false;
             
             // The -1 bit is because a width of 10 is from 0..9...
             if ( bDrawBoundingBox )
