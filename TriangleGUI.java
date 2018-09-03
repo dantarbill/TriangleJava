@@ -29,7 +29,9 @@ public class TriangleGUI
     ////////////////////////////////////////////////////////////////////////////
     // Member variables...
     ////////////////////////////////////////////////////////////////////////////
-
+    // &&& tacky way to get to this object from contained classes...
+    TriangleGUI mTriangleGUI = this;
+    
     // &&& Figure out what these fixups really represent
     protected final int GOK_PIXELS   = 7;
     protected final int TB_HEIGHT    = 30; // Top Bar Height
@@ -55,8 +57,10 @@ public class TriangleGUI
     /*========================================================================*
      Button Panel data...
      *========================================================================*/
+    // private ButtonPanel mButtonPanel  = null; // holds buttons
     private JPanel  mButtonPanel  = null; // holds buttons
     
+    // &&& the buttons and labels could probably be members of ButtonPanel
     private JButton mCalcButton   = null;
     private JLabel  mCalcLabel    = null;
     
@@ -156,19 +160,7 @@ public class TriangleGUI
         mFrameHeight = this.getHeight();
         mFrameWidth  = this.getWidth();
         mDataPanel.calcLocations();
-
-        /*--------------------------------------------------------------------*
-        &&&
-        Other stuff that will have to be recalculated when the resize event
-        occurs...
-        
-        createDataPanel()   mDataPanel
-           Note that all the data field positions will have to adjust too.
-        createButtonPanel() mButtonPanel
-        GraphicsPanel()     mGraphicPanel 
-         *--------------------------------------------------------------------*/
-
-        
+        // mButtonPanel.calcLocations();
 
     } // componentResized()
 
@@ -187,6 +179,7 @@ public class TriangleGUI
         JPanel basePanel  = new JPanel();
         basePanel.setLayout(null);
             
+        // mButtonPanel = new ButtonPanel();
         mButtonPanel = createButtonPanel();
         basePanel.add(mButtonPanel);
 
@@ -205,8 +198,8 @@ public class TriangleGUI
      <p>
      Contains everything associated with a data input field.
      <p>
-     * This is then used to create arrays of fields that can be interated through
-     * as opposed to individual explicitly referenced feild items.
+     * This is then used to create arrays of fields that can be iterated through
+     * as opposed to individual explicitly referenced field items.
      <p>
      * &&&
      * Does this need to add a PropertyChangeListener?
@@ -518,10 +511,6 @@ public class TriangleGUI
 
             calcLocations();
 
-            setSize( mDataPanelWidth
-                   , mDataPanelHeight
-                   );
-
             add( mGraphicPanel );
 
         } // DataPanel() constructor
@@ -560,6 +549,10 @@ public class TriangleGUI
                         - ( mFieldWidth     / 2 );
             mRgtX       = ( mDataPanelWidth - mFieldWidth - mSidePadding );
         
+            setSize( mDataPanelWidth
+                   , mDataPanelHeight
+                   );
+
             ////////////////////////////////////////////////////////////////////
             // Position data fields...
             ////////////////////////////////////////////////////////////////////
@@ -615,13 +608,6 @@ public class TriangleGUI
         
     } // class DataPanel
 
-    /**=======================================================================*
-     <p>
-     createButtonPanel()
-     <p>
-     Sets up button panel...
-     <p>
-     *========================================================================*/
     private JPanel createButtonPanel()
     {
         final int vertPad           = 10; // above and below buttons
@@ -698,6 +684,132 @@ public class TriangleGUI
         return buttonPanel;
         
     } // createButtonPanel()
+
+    /**=======================================================================*
+     <p>
+     nested class ButtonPanel
+     <p>
+     Contains all the position information necessary to set and resize the button
+     * panel.  Includes calcLocations() to calc/recalc the size and position of
+     * the contained components.
+     <p>
+     *========================================================================*/
+    protected class ButtonPanel
+        extends JPanel
+    {
+        final int mVertPad           = 10; // above and below buttons
+        final int mHorzPad           = 10; // between buttons
+
+        final int mButtonWidth       = 100;
+        final int mButtonHeight      = 30;
+
+        final int mButtonCount       = 2;
+        int       mButtonPanelWidth  = 0;
+        
+        /**===================================================================*
+        <p>
+        ButtonPanel() constructor
+        <p>
+        Sets up the buttons...
+        <p>
+        Since this takes up all the vertical space that the button panel *doesn't*
+        take, we need to create the button panel *first* in order to get the value
+        of mButtonPanelHeight
+
+        * @param (none)
+        * @return A DataPanel containing the data fields and a graphic overlay
+         <p>
+         *====================================================================*/
+        ButtonPanel()
+        {
+            super();
+            
+            mButtonPanelHeight = mButtonHeight + mVertPad;
+
+            ////////////////////////////////////////////////////////////////////
+            // Setup the panel to put the buttons on...
+            ////////////////////////////////////////////////////////////////////
+            setLayout(null);
+
+            ////////////////////////////////////////////////////////////////////
+            // Create calc button...
+            ////////////////////////////////////////////////////////////////////
+            mCalcButton = new JButton("Calculate");
+            mCalcLabel  = new JLabel("");
+
+            mCalcButton.setMnemonic(99);
+            mCalcButton.addActionListener(mTriangleGUI);
+
+            mCalcButton.setSize( mButtonWidth
+                               , mButtonHeight  
+                               );
+
+            ////////////////////////////////////////////////////////////////////
+            // Create reset button...
+            ////////////////////////////////////////////////////////////////////
+            mResetButton = new JButton("Reset");
+            mResetLabel  = new JLabel("");
+
+            mResetButton.setMnemonic(114);
+            mResetButton.addActionListener(mTriangleGUI);
+
+            mResetButton.setSize( mButtonWidth
+                                , mButtonHeight  
+                                );
+            calcLocations();
+
+            add(mCalcLabel);
+            add(mCalcButton);
+            add(mResetLabel);
+            add(mResetButton);
+            
+            setOpaque(true);
+            
+        } // ButtonPanel() constructor
+        
+        /**===================================================================*
+         <p>
+         calcLocations()
+         <p>
+         * Calculates the locations of all the UI elements on the ButtonPanel.
+         * Refers to the following variables which need to be calculated first...
+         <p>
+         * mFrameWidth
+         <p>
+         * mFrameHeight
+         <p>
+         * Note that this needs to be called BEFORE mDataPanel since
+         * mButtonPanelHeight is a dependency.
+         *====================================================================*/
+        protected void calcLocations()
+        {
+            mButtonPanelWidth = mFrameWidth;
+
+            setLocation( 0
+                       , mFrameHeight - mButtonPanelHeight
+                       );
+            setSize( mButtonPanelWidth
+                   , mButtonPanelHeight
+                   );
+
+            int calcButtonX = ( mButtonPanelWidth 
+                              - ( ( mButtonWidth * mButtonCount )     // buttons width
+                                + ( ( mButtonCount - 1 ) * mHorzPad ) // padding width
+                                )
+                              ) / 2;
+
+            mCalcButton.setLocation( calcButtonX
+                                   , mVertPad / 2 
+                                   );
+
+            mResetButton.setLocation( calcButtonX 
+                                    + mButtonWidth 
+                                    + mHorzPad // reset to right of calc
+                                    , mVertPad / 2 
+                                    );
+        } // calcLocations()
+        
+    } // class ButtonPanel
     
     /**=======================================================================*
      <p>
