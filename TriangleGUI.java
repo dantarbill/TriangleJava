@@ -215,6 +215,7 @@ public class TriangleGUI
         public JLabel              mLabel     = null;
         //  angle/side        
         public boolean             mIsAngle   = false;
+        private int                mHeight    = 0;
         
          /**===================================================================*
          <p>
@@ -239,6 +240,8 @@ public class TriangleGUI
         , boolean isAngle
         )
         {
+            mHeight = height;
+            
             mTextField = createDataField
                 ( xPos
                 , yPos
@@ -365,7 +368,7 @@ public class TriangleGUI
         , int    yPos
         )
         {
-            mTextField.setLocation(xPos, yPos);
+            mTextField.setLocation(xPos, yPos + mHeight);
             mLabel    .setLocation(xPos, yPos);
         } // setLocation()
         
