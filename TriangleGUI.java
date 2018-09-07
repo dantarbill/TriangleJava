@@ -35,6 +35,8 @@ public class TriangleGUI
     // &&& Figure out what these fixups really represent
     protected final int GOK_PIXELS   = 7;
     protected final int TB_HEIGHT    = 30; // Top Bar Height
+    protected final int WIDTH_FIX    = (GOK_PIXELS * 2);
+    protected final int HEIGHT_FIX   = (GOK_PIXELS + TB_HEIGHT);
     
     protected final int    NUM_DECIMAL_PLACES  = 4;
     protected final int    NUM_ROUNDING_PLACES = 12;
@@ -122,8 +124,8 @@ public class TriangleGUI
 
         setBounds( frameX
                  , frameY
-                 , mFrameWidth  + (GOK_PIXELS * 2)
-                 , mFrameHeight + (GOK_PIXELS + TB_HEIGHT)
+                 , mFrameWidth  + WIDTH_FIX
+                 , mFrameHeight + HEIGHT_FIX
                  );
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Container con = this.getContentPane(); // inherit main frame
@@ -160,8 +162,8 @@ public class TriangleGUI
      *========================================================================*/
     public void componentResized(ComponentEvent ce)
     {
-        mFrameHeight = this.getHeight(); // - (GOK_PIXELS * 2);
-        mFrameWidth  = this.getWidth(); //  - (GOK_PIXELS + TB_HEIGHT);
+        mFrameWidth  = this.getWidth()  - WIDTH_FIX;
+        mFrameHeight = this.getHeight() - HEIGHT_FIX;
         /*--------------------------------------------------------------------*
         Once we've set the width and height of the base frame, we should have
         all we need to resize everything else to fit...
@@ -641,7 +643,7 @@ public class TriangleGUI
         ////////////////////////////////////////////////////////////////////////
         buttonPanel.setLayout(null);
         buttonPanel.setLocation( ( mFrameWidth  - buttonPanelWidth ) / 2
-                               ,   mFrameHeight - ( buttonHeight + vertPad )
+                               ,   mFrameHeight - mButtonPanelHeight
                                );
         buttonPanel.setSize( buttonPanelWidth
                            , mButtonPanelHeight
@@ -799,7 +801,7 @@ public class TriangleGUI
         {
             mButtonPanelWidth = mFrameWidth;
 
-            setLocation( 0 // if the button panel is the same width as the base panel
+            setLocation( ( mFrameWidth  - mButtonPanelWidth ) / 2
                        , mFrameHeight - mButtonPanelHeight
                        );
             setSize( mButtonPanelWidth
