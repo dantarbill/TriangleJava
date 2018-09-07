@@ -57,6 +57,7 @@ public class TriangleGUI
     /*========================================================================*
      Button Panel data...
      *========================================================================*/
+    // &&& RESIZE_SUPPORT
     // private ButtonPanel mButtonPanel  = null; // holds buttons
     private JPanel  mButtonPanel  = null; // holds buttons
     
@@ -67,6 +68,9 @@ public class TriangleGUI
     private JButton mResetButton  = null;
     private JLabel  mResetLabel   = null;
     
+    /*------------------------------------------------------------------------*
+    This value is determined once in the ButtonPanel constructor &&&
+    */
     protected int   mButtonPanelHeight = 0;
 
     /*========================================================================*
@@ -116,7 +120,6 @@ public class TriangleGUI
         
         setUpFormats();
 
-        // &&& this may change when we get resize() working...
         setBounds( frameX
                  , frameY
                  , mFrameWidth  + (GOK_PIXELS * 2)
@@ -157,9 +160,14 @@ public class TriangleGUI
      *========================================================================*/
     public void componentResized(ComponentEvent ce)
     {
-        mFrameHeight = this.getHeight();
-        mFrameWidth  = this.getWidth();
+        mFrameHeight = this.getHeight(); // - (GOK_PIXELS * 2);
+        mFrameWidth  = this.getWidth(); //  - (GOK_PIXELS + TB_HEIGHT);
+        /*--------------------------------------------------------------------*
+        Once we've set the width and height of the base frame, we should have
+        all we need to resize everything else to fit...
+        *---------------------------------------------------------------------*/
         mDataPanel.calcLocations();
+        // &&& RESIZE_SUPPORT
         // mButtonPanel.calcLocations();
 
     } // componentResized()
@@ -179,6 +187,7 @@ public class TriangleGUI
         JPanel basePanel  = new JPanel();
         basePanel.setLayout(null);
             
+        // &&& RESIZE_SUPPORT
         // mButtonPanel = new ButtonPanel();
         mButtonPanel = createButtonPanel();
         basePanel.add(mButtonPanel);
@@ -387,6 +396,7 @@ public class TriangleGUI
         extends JPanel
     {
         int mDataPanelWidth  = 0;
+        // &&& RESIZE_SUPPORT
         int mDataPanelHeight = 0;
         
         final int mFieldWidth  = 70;
@@ -411,6 +421,7 @@ public class TriangleGUI
         <p>
         Sets up the data fields...
         <p>
+        * &&&
         Since this takes up all the vertical space that the button panel *doesn't*
         take, we need to create the button panel *first* in order to get the value
         of mButtonPanelHeight
@@ -427,9 +438,7 @@ public class TriangleGUI
             // Set up the panel to put the data fields on...
             ////////////////////////////////////////////////////////////////////
             setLayout(null);
-            setLocation( 0
-                       , 0
-                       );
+            setLocation( 0, 0 );
 
             ////////////////////////////////////////////////////////////////////
             // Create data fields...
@@ -529,7 +538,7 @@ public class TriangleGUI
          <p>
          * mFrameHeight
          <p>
-         * mButtonPanelHeight
+         * mButtonPanelHeight // &&&
          <p>
          * Note that this sets the positions of all the DataField objects and
          * the mGraphicsPanel so, it needs to be called AFTER they are constructed.
@@ -537,7 +546,9 @@ public class TriangleGUI
         protected void calcLocations()
         {
             mDataPanelWidth  = mFrameWidth;
-            mDataPanelHeight = mFrameHeight - mButtonPanelHeight;
+            mDataPanelHeight = mFrameHeight - 
+                               mButtonPanelHeight; // &&&
+                               // mButtonPanel.mButtonPanelHeight;
         
             mMidRowY    = ( ( mDataPanelHeight - mTopPadding - mBtmPadding ) / 2 )
                           - mFieldHeight + mTopPadding;
@@ -708,6 +719,7 @@ public class TriangleGUI
 
         final int mButtonCount       = 2;
         int       mButtonPanelWidth  = 0;
+        final int mButtonPanelHeight = mButtonHeight + mVertPad;
         
         /**===================================================================*
         <p>
@@ -715,6 +727,7 @@ public class TriangleGUI
         <p>
         Sets up the buttons...
         <p>
+        * &&&
         Since this takes up all the vertical space that the button panel *doesn't*
         take, we need to create the button panel *first* in order to get the value
         of mButtonPanelHeight
@@ -727,8 +740,6 @@ public class TriangleGUI
         {
             super();
             
-            mButtonPanelHeight = mButtonHeight + mVertPad;
-
             ////////////////////////////////////////////////////////////////////
             // Setup the panel to put the buttons on...
             ////////////////////////////////////////////////////////////////////
@@ -741,6 +752,7 @@ public class TriangleGUI
             mCalcLabel  = new JLabel("");
 
             mCalcButton.setMnemonic(99);
+            // &&& is this a problem since it doesn't have "this"?
             mCalcButton.addActionListener(mTriangleGUI);
 
             mCalcButton.setSize( mButtonWidth
@@ -754,6 +766,7 @@ public class TriangleGUI
             mResetLabel  = new JLabel("");
 
             mResetButton.setMnemonic(114);
+            // &&& is this a problem since it doesn't have "this"?
             mResetButton.addActionListener(mTriangleGUI);
 
             mResetButton.setSize( mButtonWidth
@@ -766,7 +779,7 @@ public class TriangleGUI
             add(mResetLabel);
             add(mResetButton);
             
-            setOpaque(true);
+            // setOpaque(true);
             
         } // ButtonPanel() constructor
         
@@ -781,14 +794,12 @@ public class TriangleGUI
          <p>
          * mFrameHeight
          <p>
-         * Note that this needs to be called BEFORE mDataPanel since
-         * mButtonPanelHeight is a dependency.
          *====================================================================*/
         protected void calcLocations()
         {
             mButtonPanelWidth = mFrameWidth;
 
-            setLocation( 0
+            setLocation( 0 // if the button panel is the same width as the base panel
                        , mFrameHeight - mButtonPanelHeight
                        );
             setSize( mButtonPanelWidth
